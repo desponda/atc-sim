@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "B737",
+  "name": "Boeing 737-700",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 210,
+    "vminFlaps": 135,
+    "vapp": 140,
+    "vref": 132,
+    "vmaxBelow10k": 250,
+    "vmo": 340,
+    "mmo": 0.82,
+    "typicalCruiseIAS": 280,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 3000,
+    "rateAt10k": 2500,
+    "rateAt24k": 1800,
+    "rateAt35k": 800,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1800,
+    "maxRate": 3500,
+    "idleGradient": 3.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 41000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

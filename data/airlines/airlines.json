@@ -1,0 +1,129 @@
+{
+  "airlines": [
+    {
+      "icao": "DAL",
+      "iata": "DL",
+      "name": "Delta Air Lines",
+      "callsign": "DELTA",
+      "fleetTypes": ["B738", "A320", "CRJ7", "CRJ9", "E170", "E75L"],
+      "hubsServed": ["KATL", "KDTW", "KMSP", "KJFK", "KLGA"]
+    },
+    {
+      "icao": "AAL",
+      "iata": "AA",
+      "name": "American Airlines",
+      "callsign": "AMERICAN",
+      "fleetTypes": ["B738", "A320", "CRJ7", "CRJ9", "E170", "E75L"],
+      "hubsServed": ["KCLT", "KDFW", "KJFK", "KMIA", "KORD", "KPHL"]
+    },
+    {
+      "icao": "UAL",
+      "iata": "UA",
+      "name": "United Airlines",
+      "callsign": "UNITED",
+      "fleetTypes": ["B737", "B738", "A320", "CRJ7", "E75L"],
+      "hubsServed": ["KORD", "KDEN", "KIAH", "KEWR", "KSFO"]
+    },
+    {
+      "icao": "NKS",
+      "iata": "NK",
+      "name": "Spirit Airlines",
+      "callsign": "SPIRIT",
+      "fleetTypes": ["A320"],
+      "hubsServed": ["KFLL", "KDTW", "KLAS"]
+    },
+    {
+      "icao": "MXY",
+      "iata": "MX",
+      "name": "Breeze Airways",
+      "callsign": "BREEZE",
+      "fleetTypes": ["E75L", "A320"],
+      "hubsServed": ["KRIC", "KTPA", "KBDL"]
+    },
+    {
+      "icao": "JBU",
+      "iata": "B6",
+      "name": "JetBlue Airways",
+      "callsign": "JETBLUE",
+      "fleetTypes": ["A320"],
+      "hubsServed": ["KJFK", "KBOS", "KFLL"]
+    },
+    {
+      "icao": "RPA",
+      "iata": "YX",
+      "name": "Republic Airways",
+      "callsign": "BRICKYARD",
+      "fleetTypes": ["E75L", "E170"],
+      "hubsServed": ["KORD", "KEWR", "KDCA"],
+      "operatesAs": ["DAL", "AAL", "UAL"]
+    },
+    {
+      "icao": "PDT",
+      "iata": "PT",
+      "name": "Piedmont Airlines",
+      "callsign": "PIEDMONT",
+      "fleetTypes": ["E170", "E75L"],
+      "hubsServed": ["KCLT", "KPHL"],
+      "operatesAs": ["AAL"]
+    },
+    {
+      "icao": "JIA",
+      "iata": "OH",
+      "name": "PSA Airlines",
+      "callsign": "BLUE STREAK",
+      "fleetTypes": ["CRJ7", "CRJ9"],
+      "hubsServed": ["KCLT", "KDCA", "KPHL"],
+      "operatesAs": ["AAL"]
+    },
+    {
+      "icao": "SKW",
+      "iata": "OO",
+      "name": "SkyWest Airlines",
+      "callsign": "SKYWEST",
+      "fleetTypes": ["CRJ7", "CRJ9", "E75L"],
+      "hubsServed": ["KORD", "KDEN", "KMSP", "KDTW", "KSLC"],
+      "operatesAs": ["DAL", "UAL", "AAL"]
+    },
+    {
+      "icao": "EDV",
+      "iata": "9E",
+      "name": "Endeavor Air",
+      "callsign": "ENDEAVOR",
+      "fleetTypes": ["CRJ7", "CRJ9"],
+      "hubsServed": ["KATL", "KJFK", "KLGA", "KMSP"],
+      "operatesAs": ["DAL"]
+    },
+    {
+      "icao": "FDX",
+      "iata": "FX",
+      "name": "FedEx Express",
+      "callsign": "FEDEX",
+      "fleetTypes": ["B738"],
+      "hubsServed": ["KMEM", "KIND"]
+    },
+    {
+      "icao": "UPS",
+      "iata": "5X",
+      "name": "UPS Airlines",
+      "callsign": "UPS",
+      "fleetTypes": ["B738"],
+      "hubsServed": ["KSDF"]
+    },
+    {
+      "icao": "SWA",
+      "iata": "WN",
+      "name": "Southwest Airlines",
+      "callsign": "SOUTHWEST",
+      "fleetTypes": ["B737", "B738"],
+      "hubsServed": ["KBWI", "KMDW", "KDEN", "KDAL"]
+    },
+    {
+      "icao": "FFT",
+      "iata": "F9",
+      "name": "Frontier Airlines",
+      "callsign": "FRONTIER",
+      "fleetTypes": ["A320"],
+      "hubsServed": ["KDEN"]
+    }
+  ]
+}

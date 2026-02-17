@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "C182",
+  "name": "Cessna 182 Skylane",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 60,
+    "vminFlaps": 50,
+    "vapp": 70,
+    "vref": 65,
+    "vmaxBelow10k": 155,
+    "vmo": 175,
+    "mmo": 0.25,
+    "typicalCruiseIAS": 140,
+    "typicalCruiseMach": 0.21
+  },
+  "climb": {
+    "initialRate": 920,
+    "rateAt10k": 500,
+    "rateAt24k": 0,
+    "rateAt35k": 0,
+    "accelAltitude": 500
+  },
+  "descent": {
+    "standardRate": 750,
+    "maxRate": 1500,
+    "idleGradient": 4.8
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 18100,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": false,
+    "vor": true,
+    "dme": false
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "description": "Victor airways segments near KRIC. Master data is in airports/kric.json.",
+  "airways": [
+    {
+      "id": "V1",
+      "type": "low",
+      "segments": [
+        {
+          "from": { "id": "FAK", "type": "navaid", "position": { "lat": 37.2939, "lon": -77.6114 } },
+          "to": { "id": "RIC", "type": "navaid", "position": { "lat": 37.5069, "lon": -77.3200 } },
+          "minAltitude": 2300,
+          "maxAltitude": 18000
+        },
+        {
+          "from": { "id": "RIC", "type": "navaid", "position": { "lat": 37.5069, "lon": -77.3200 } },
+          "to": { "id": "OFP", "type": "navaid", "position": { "lat": 37.2914, "lon": -77.2178 } },
+          "minAltitude": 2200,
+          "maxAltitude": 18000
+        }
+      ]
+    },
+    {
+      "id": "V16",
+      "type": "low",
+      "segments": [
+        {
+          "from": { "id": "GVE", "type": "navaid", "position": { "lat": 38.1558, "lon": -78.1656 } },
+          "to": { "id": "RIC", "type": "navaid", "position": { "lat": 37.5069, "lon": -77.3200 } },
+          "minAltitude": 3000,
+          "maxAltitude": 18000
+        }
+      ]
+    },
+    {
+      "id": "V33",
+      "type": "low",
+      "segments": [
+        {
+          "from": { "id": "RIC", "type": "navaid", "position": { "lat": 37.5069, "lon": -77.3200 } },
+          "to": { "id": "CSN", "type": "navaid", "position": { "lat": 38.6342, "lon": -77.8647 } },
+          "minAltitude": 3000,
+          "maxAltitude": 18000
+        }
+      ]
+    }
+  ]
+}
