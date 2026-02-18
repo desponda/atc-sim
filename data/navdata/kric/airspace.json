@@ -1,0 +1,26 @@
+{
+  "description": "Airspace boundaries for KRIC Class C. Master data is in airports/kric.json.",
+  "airspace": [
+    {
+      "name": "KRIC Class C Inner",
+      "class": "C",
+      "floor": 0,
+      "ceiling": 4200,
+      "description": "Surface to 4200ft MSL, 5nm radius"
+    },
+    {
+      "name": "KRIC Class C Outer Shelf North",
+      "class": "C",
+      "floor": 1300,
+      "ceiling": 4200,
+      "description": "1300ft MSL to 4200ft MSL, 10nm radius north shelf"
+    },
+    {
+      "name": "KRIC Class C Outer Shelf South",
+      "class": "C",
+      "floor": 1300,
+      "ceiling": 4200,
+      "description": "1300ft MSL to 4200ft MSL, 10nm radius south shelf"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "atc-sim",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @atc-sim/server dev\" \"pnpm --filter @atc-sim/client dev\"",
+    "build": "pnpm --filter @atc-sim/shared build && pnpm --filter @atc-sim/server build && pnpm --filter @atc-sim/client build",
+    "build:shared": "pnpm --filter @atc-sim/shared build",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

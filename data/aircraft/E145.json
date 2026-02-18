@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "E145",
+  "name": "Embraer ERJ-145",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 190,
+    "vminFlaps": 118,
+    "vapp": 132,
+    "vref": 125,
+    "vmaxBelow10k": 250,
+    "vmo": 320,
+    "mmo": 0.78,
+    "typicalCruiseIAS": 265,
+    "typicalCruiseMach": 0.75
+  },
+  "climb": {
+    "initialRate": 2500,
+    "rateAt10k": 2000,
+    "rateAt24k": 1300,
+    "rateAt35k": 500,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.2
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 37000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

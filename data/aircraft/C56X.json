@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "C56X",
+  "name": "Cessna Citation Excel/XLS",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 165,
+    "vminFlaps": 105,
+    "vapp": 118,
+    "vref": 112,
+    "vmaxBelow10k": 250,
+    "vmo": 305,
+    "mmo": 0.80,
+    "typicalCruiseIAS": 270,
+    "typicalCruiseMach": 0.75
+  },
+  "climb": {
+    "initialRate": 3500,
+    "rateAt10k": 3000,
+    "rateAt24k": 2200,
+    "rateAt35k": 1200,
+    "accelAltitude": 800
+  },
+  "descent": {
+    "standardRate": 1800,
+    "maxRate": 3500,
+    "idleGradient": 3.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 45000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

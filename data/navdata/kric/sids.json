@@ -1,0 +1,4 @@
+{
+  "description": "SIDs for KRIC. Master data with full leg details is in airports/kric.json.",
+  "sids": ["COLIN8", "KALLI7", "LUCYL6", "READE7"]
+}

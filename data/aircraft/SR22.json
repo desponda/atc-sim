@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "SR22",
+  "name": "Cirrus SR22",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 70,
+    "vminFlaps": 62,
+    "vapp": 80,
+    "vref": 75,
+    "vmaxBelow10k": 176,
+    "vmo": 200,
+    "mmo": 0.30,
+    "typicalCruiseIAS": 170,
+    "typicalCruiseMach": 0.26
+  },
+  "climb": {
+    "initialRate": 1200,
+    "rateAt10k": 700,
+    "rateAt24k": 0,
+    "rateAt35k": 0,
+    "accelAltitude": 500
+  },
+  "descent": {
+    "standardRate": 800,
+    "maxRate": 2000,
+    "idleGradient": 4.5
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 17500,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": false,
+    "vor": true,
+    "dme": false
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "CL30",
+  "name": "Bombardier Challenger 300",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 175,
+    "vminFlaps": 115,
+    "vapp": 128,
+    "vref": 121,
+    "vmaxBelow10k": 250,
+    "vmo": 320,
+    "mmo": 0.83,
+    "typicalCruiseIAS": 280,
+    "typicalCruiseMach": 0.80
+  },
+  "climb": {
+    "initialRate": 3800,
+    "rateAt10k": 3200,
+    "rateAt24k": 2500,
+    "rateAt35k": 1500,
+    "accelAltitude": 800
+  },
+  "descent": {
+    "standardRate": 1800,
+    "maxRate": 3500,
+    "idleGradient": 3.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 45000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

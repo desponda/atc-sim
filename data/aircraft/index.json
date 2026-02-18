@@ -1,0 +1,84 @@
+{
+  "aircraft": [
+    {
+      "typeDesignator": "B737",
+      "name": "Boeing 737-700",
+      "file": "B737.json"
+    },
+    {
+      "typeDesignator": "B738",
+      "name": "Boeing 737-800",
+      "file": "B738.json"
+    },
+    {
+      "typeDesignator": "A320",
+      "name": "Airbus A320-200",
+      "file": "A320.json"
+    },
+    {
+      "typeDesignator": "A21N",
+      "name": "Airbus A321neo",
+      "file": "A21N.json"
+    },
+    {
+      "typeDesignator": "CRJ2",
+      "name": "Bombardier CRJ-200",
+      "file": "CRJ2.json"
+    },
+    {
+      "typeDesignator": "CRJ7",
+      "name": "Bombardier CRJ-700",
+      "file": "CRJ7.json"
+    },
+    {
+      "typeDesignator": "CRJ9",
+      "name": "Bombardier CRJ-900",
+      "file": "CRJ9.json"
+    },
+    {
+      "typeDesignator": "E170",
+      "name": "Embraer 170",
+      "file": "E170.json"
+    },
+    {
+      "typeDesignator": "E75L",
+      "name": "Embraer 175 Long Range",
+      "file": "E75L.json"
+    },
+    {
+      "typeDesignator": "C172",
+      "name": "Cessna 172 Skyhawk",
+      "file": "C172.json"
+    },
+    {
+      "typeDesignator": "C208",
+      "name": "Cessna 208B Grand Caravan",
+      "file": "C208.json"
+    },
+    {
+      "typeDesignator": "C182",
+      "name": "Cessna 182 Skylane",
+      "file": "C182.json"
+    },
+    {
+      "typeDesignator": "SR22",
+      "name": "Cirrus SR22",
+      "file": "SR22.json"
+    },
+    {
+      "typeDesignator": "E145",
+      "name": "Embraer ERJ-145",
+      "file": "E145.json"
+    },
+    {
+      "typeDesignator": "C56X",
+      "name": "Cessna Citation Excel/XLS",
+      "file": "C56X.json"
+    },
+    {
+      "typeDesignator": "CL30",
+      "name": "Bombardier Challenger 300",
+      "file": "CL30.json"
+    }
+  ]
+}

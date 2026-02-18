@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "E75L",
+  "name": "Embraer 175 Long Range",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 200,
+    "vminFlaps": 120,
+    "vapp": 132,
+    "vref": 126,
+    "vmaxBelow10k": 250,
+    "vmo": 320,
+    "mmo": 0.82,
+    "typicalCruiseIAS": 275,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2700,
+    "rateAt10k": 2200,
+    "rateAt24k": 1500,
+    "rateAt35k": 700,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.1
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 41000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "CRJ9",
+  "name": "Bombardier CRJ-900",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 200,
+    "vminFlaps": 128,
+    "vapp": 140,
+    "vref": 131,
+    "vmaxBelow10k": 250,
+    "vmo": 315,
+    "mmo": 0.85,
+    "typicalCruiseIAS": 270,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2600,
+    "rateAt10k": 2100,
+    "rateAt24k": 1400,
+    "rateAt35k": 650,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.1
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 41000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}
