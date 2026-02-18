@@ -9,7 +9,7 @@
 
   "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
 
-  "postStartCommand": "pnpm install --frozen-lockfile || echo 'Warning: pnpm install failed but continuing...'",
+  "postStartCommand": "pnpm install --frozen-lockfile || echo 'Warning: pnpm install failed. Check container logs or try rebuilding the devcontainer.'",
 
   "forwardPorts": [3001, 5173],
   "portsAttributes": {
