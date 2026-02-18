@@ -14,7 +14,8 @@ ingress:
   enabled: true
   className: cloudflare-tunnel
   host: atc.dresponda.com
-  annotations: {}
+  annotations:
+    tunnel.ingress.k8s.cloudflare.com/enable-default-route: "true"
 
 resources:
   requests:
