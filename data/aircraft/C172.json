@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "C172",
+  "name": "Cessna 172 Skyhawk",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 55,
+    "vminFlaps": 48,
+    "vapp": 65,
+    "vref": 60,
+    "vmaxBelow10k": 140,
+    "vmo": 163,
+    "mmo": 0.20,
+    "typicalCruiseIAS": 120,
+    "typicalCruiseMach": 0.18
+  },
+  "climb": {
+    "initialRate": 730,
+    "rateAt10k": 400,
+    "rateAt24k": 0,
+    "rateAt35k": 0,
+    "accelAltitude": 500
+  },
+  "descent": {
+    "standardRate": 700,
+    "maxRate": 1500,
+    "idleGradient": 5.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 14000,
+  "capability": {
+    "rnav": false,
+    "rnavGps": false,
+    "ils": false,
+    "vor": true,
+    "dme": false
+  }
+}

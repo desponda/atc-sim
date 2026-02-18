@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "A21N",
+  "name": "Airbus A321neo",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 218,
+    "vminFlaps": 135,
+    "vapp": 142,
+    "vref": 134,
+    "vmaxBelow10k": 250,
+    "vmo": 350,
+    "mmo": 0.82,
+    "typicalCruiseIAS": 290,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2700,
+    "rateAt10k": 2300,
+    "rateAt24k": 1700,
+    "rateAt35k": 800,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1800,
+    "maxRate": 3500,
+    "idleGradient": 3.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 39800,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "description": "STARs for KRIC. Master data with full leg details is in airports/kric.json.",
+  "stars": ["DUCXS5", "POWTN5", "SPIDR5"]
+}

@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "CRJ2",
+  "name": "Bombardier CRJ-200",
+  "wakeCategory": "SMALL",
+  "speed": {
+    "vminClean": 185,
+    "vminFlaps": 120,
+    "vapp": 133,
+    "vref": 126,
+    "vmaxBelow10k": 250,
+    "vmo": 315,
+    "mmo": 0.85,
+    "typicalCruiseIAS": 265,
+    "typicalCruiseMach": 0.74
+  },
+  "climb": {
+    "initialRate": 3000,
+    "rateAt10k": 2400,
+    "rateAt24k": 1500,
+    "rateAt35k": 600,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.2
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 41000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

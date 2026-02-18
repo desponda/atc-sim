@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "E170",
+  "name": "Embraer 170",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 195,
+    "vminFlaps": 118,
+    "vapp": 130,
+    "vref": 124,
+    "vmaxBelow10k": 250,
+    "vmo": 320,
+    "mmo": 0.82,
+    "typicalCruiseIAS": 270,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2700,
+    "rateAt10k": 2200,
+    "rateAt24k": 1500,
+    "rateAt35k": 700,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.1
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 39000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

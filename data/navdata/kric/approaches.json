@@ -1,0 +1,12 @@
+{
+  "description": "Approaches for KRIC. Master data with full leg details is in airports/kric.json.",
+  "approaches": [
+    "ILS OR LOC RWY 16",
+    "ILS OR LOC RWY 34",
+    "ILS OR LOC RWY 02",
+    "RNAV (GPS) Z RWY 16",
+    "RNAV (GPS) Z RWY 34",
+    "RNAV (GPS) Z RWY 02",
+    "RNAV (GPS) Z RWY 20"
+  ]
+}

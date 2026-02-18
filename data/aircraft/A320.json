@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "A320",
+  "name": "Airbus A320-200",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 210,
+    "vminFlaps": 131,
+    "vapp": 137,
+    "vref": 130,
+    "vmaxBelow10k": 250,
+    "vmo": 350,
+    "mmo": 0.82,
+    "typicalCruiseIAS": 290,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2900,
+    "rateAt10k": 2400,
+    "rateAt24k": 1800,
+    "rateAt35k": 800,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1800,
+    "maxRate": 3500,
+    "idleGradient": 3.0
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 39000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

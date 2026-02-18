@@ -1,0 +1,40 @@
+{
+  "typeDesignator": "CRJ7",
+  "name": "Bombardier CRJ-700",
+  "wakeCategory": "LARGE",
+  "speed": {
+    "vminClean": 195,
+    "vminFlaps": 125,
+    "vapp": 135,
+    "vref": 128,
+    "vmaxBelow10k": 250,
+    "vmo": 315,
+    "mmo": 0.85,
+    "typicalCruiseIAS": 270,
+    "typicalCruiseMach": 0.78
+  },
+  "climb": {
+    "initialRate": 2500,
+    "rateAt10k": 2200,
+    "rateAt24k": 1500,
+    "rateAt35k": 700,
+    "accelAltitude": 1000
+  },
+  "descent": {
+    "standardRate": 1700,
+    "maxRate": 3500,
+    "idleGradient": 3.2
+  },
+  "turn": {
+    "standardRate": 3.0,
+    "maxBank": 30
+  },
+  "ceiling": 41000,
+  "capability": {
+    "rnav": true,
+    "rnavGps": true,
+    "ils": true,
+    "vor": true,
+    "dme": true
+  }
+}

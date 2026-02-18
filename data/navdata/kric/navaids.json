@@ -1,0 +1,91 @@
+{
+  "description": "Navaids near KRIC. Master data is in airports/kric.json.",
+  "navaids": [
+    {
+      "id": "RIC",
+      "name": "Richmond",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 37.502348, "lon": -77.320276 },
+      "frequency": 114.1,
+      "morseId": ".-. .. -.-.",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "FAK",
+      "name": "Flat Rock",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 37.528509, "lon": -77.828219 },
+      "frequency": 113.3,
+      "morseId": "..-. .- -.-",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "HPW",
+      "name": "Hopewell",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 37.328870, "lon": -77.115944 },
+      "frequency": 114.35,
+      "morseId": ".... .--. .--",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "CSN",
+      "name": "Casanova",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 38.634200, "lon": -77.864700 },
+      "frequency": 116.3,
+      "morseId": "-.-. ... -.",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "GVE",
+      "name": "Gordonsville",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 38.155800, "lon": -78.165600 },
+      "frequency": 115.0,
+      "morseId": "--. ...- .",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "LYH",
+      "name": "Lynchburg",
+      "type": "navaid",
+      "navaidType": "VORTAC",
+      "position": { "lat": 37.326100, "lon": -79.201700 },
+      "frequency": 109.2,
+      "morseId": ".-.. -.-- ....",
+      "magneticVariation": -10.0
+    },
+    {
+      "id": "IRIC",
+      "name": "Richmond ILS 16",
+      "type": "navaid",
+      "navaidType": "ILS",
+      "position": { "lat": 37.493375, "lon": -77.304947 },
+      "frequency": 109.5,
+      "morseId": ".. .-. .. -.-.",
+      "magneticVariation": -10.0,
+      "ilsRunway": "16",
+      "localizerCourse": 157,
+      "glideslopeAngle": 3.0
+    },
+    {
+      "id": "IRID",
+      "name": "Richmond ILS 34",
+      "type": "navaid",
+      "navaidType": "ILS",
+      "position": { "lat": 37.519067, "lon": -77.325522 },
+      "frequency": 111.5,
+      "morseId": ".. .-. .. -..",
+      "magneticVariation": -10.0,
+      "ilsRunway": "34",
+      "localizerCourse": 337,
+      "glideslopeAngle": 3.0
+    }
+  ]
+}
