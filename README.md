@@ -27,8 +27,8 @@ atc-sim/
 │       ├── src/ui/             # Status bar, flight strips, comm log, event log
 │       ├── src/audio/          # Web Audio API synthesized sound effects
 │       └── src/state/          # Zustand game store
-├── tools/vice-extract/         # Go utility for extracting Vice video maps
-└── playtest-*.ts               # Automated playtest scripts (WebSocket bots)
+├── scripts/                    # Automated playtest/integration scripts (WebSocket bots)
+└── tools/vice-extract/         # Go utility for extracting Vice video maps
 ```
 
 ## Quick Start
@@ -104,9 +104,10 @@ pnpm --filter @atc-sim/client dev   # Client only (port 5173)
 Root-level `playtest-*.ts` scripts connect via WebSocket and drive automated scenarios:
 
 ```bash
-npx tsx playtest-arrivals.ts     # Heavy arrival flow to RWY 16 ILS
-npx tsx playtest-mixed.ts        # Mixed arrivals and departures
-npx tsx playtest-agent.ts        # AI controller agent (auto-sequences traffic)
+npx tsx scripts/playtest-arrivals.ts     # Heavy arrival flow to RWY 16 ILS
+npx tsx scripts/playtest-mixed.ts        # Mixed arrivals and departures
+npx tsx scripts/playtest-agent.ts        # AI controller agent (auto-sequences traffic)
+npx tsx scripts/test-e2e.ts              # End-to-end WebSocket integration tests
 ```
 
 ### Video Maps
