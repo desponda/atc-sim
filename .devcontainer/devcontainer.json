@@ -7,12 +7,9 @@
       "moby": false
     }
   },
-  "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
+  "onCreateCommand": "npm install -g pnpm@9 @anthropic-ai/sdk && pnpm install",
   "postStartCommand": "pnpm install --frozen-lockfile || echo 'Warning: pnpm install failed. Check container logs or try rebuilding the devcontainer.'",
-  "forwardPorts": [
-    3001,
-    5173
-  ],
+  "forwardPorts": [3001, 5173],
   "portsAttributes": {
     "3001": {
       "label": "API / WebSocket",
