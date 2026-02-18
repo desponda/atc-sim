@@ -1,24 +1,28 @@
 {
   "name": "atc-sim",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
-
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": false
     }
   },
-
   "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
-
   "postStartCommand": "pnpm install --frozen-lockfile || echo 'Warning: pnpm install failed. Check container logs or try rebuilding the devcontainer.'",
-
-  "forwardPorts": [3001, 5173],
+  "forwardPorts": [
+    3001,
+    5173
+  ],
   "portsAttributes": {
-    "3001": { "label": "API / WebSocket", "onAutoForward": "silent" },
-    "5173": { "label": "Client (Vite)", "onAutoForward": "openBrowser" }
+    "3001": {
+      "label": "API / WebSocket",
+      "onAutoForward": "silent"
+    },
+    "5173": {
+      "label": "Client (Vite)",
+      "onAutoForward": "openBrowser"
+    }
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
