@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: ghcr.io/desponda/atc-sim
   pullPolicy: Always
-  tag: "latest"
+  tag: "sha-bdec03f"
 
 service:
   type: ClusterIP
