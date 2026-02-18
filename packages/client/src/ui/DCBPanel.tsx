@@ -145,6 +145,77 @@ export const DCBPanel: React.FC = () => {
         </div>
       </div>
 
+      {/* Velocity Vectors */}
+      <div style={sectionStyle}>
+        <div style={labelStyle}>PTL (MIN)</div>
+        <div style={buttonRowStyle}>
+          {[0, 1, 2].map((v) => (
+            <button
+              key={v}
+              style={buttonStyle(scopeSettings.velocityVectorMinutes === v)}
+              onClick={() => setScopeSettings({ velocityVectorMinutes: v })}
+            >
+              {v === 0 ? 'OFF' : v}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Altitude Filter */}
+      <div style={sectionStyle}>
+        <div style={labelStyle}>ALT FILTER</div>
+        <div style={buttonRowStyle}>
+          <button
+            style={buttonStyle(scopeSettings.altFilterLow === 0 && scopeSettings.altFilterHigh === 99900)}
+            onClick={() => setScopeSettings({ altFilterLow: 0, altFilterHigh: 99900 })}
+          >
+            ALL
+          </button>
+          <button
+            style={buttonStyle(scopeSettings.altFilterLow === 0 && scopeSettings.altFilterHigh === 5000)}
+            onClick={() => setScopeSettings({ altFilterLow: 0, altFilterHigh: 5000 })}
+          >
+            &lt;50
+          </button>
+          <button
+            style={buttonStyle(scopeSettings.altFilterLow === 5000 && scopeSettings.altFilterHigh === 10000)}
+            onClick={() => setScopeSettings({ altFilterLow: 5000, altFilterHigh: 10000 })}
+          >
+            50-100
+          </button>
+          <button
+            style={buttonStyle(scopeSettings.altFilterLow === 10000 && scopeSettings.altFilterHigh === 99900)}
+            onClick={() => setScopeSettings({ altFilterLow: 10000, altFilterHigh: 99900 })}
+          >
+            &gt;100
+          </button>
+        </div>
+      </div>
+
+      {/* Frequencies */}
+      {airportData?.frequencies && (
+        <div style={sectionStyle}>
+          <div style={labelStyle}>FREQUENCIES</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, fontSize: 9 }}>
+            {airportData.frequencies.tower?.[0] && (
+              <span>TWR  {airportData.frequencies.tower[0].toFixed(1)}</span>
+            )}
+            {airportData.frequencies.approach?.[0] && (
+              <span>APP  {airportData.frequencies.approach[0].toFixed(1)}</span>
+            )}
+            {airportData.frequencies.departure?.[0] && (
+              <span>DEP  {airportData.frequencies.departure[0].toFixed(1)}</span>
+            )}
+            {airportData.frequencies.center?.[0] && (
+              <span>CTR  {airportData.frequencies.center[0].toFixed(2)}</span>
+            )}
+            {airportData.frequencies.ground?.[0] && (
+              <span>GND  {airportData.frequencies.ground[0].toFixed(1)}</span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Score display */}
       {score && (
         <div style={sectionStyle}>

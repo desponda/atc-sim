@@ -10,7 +10,8 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "tsx": "^4.21.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   },
   "engines": {
     "node": ">=18"

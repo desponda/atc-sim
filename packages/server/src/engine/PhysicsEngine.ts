@@ -1,6 +1,7 @@
 import type {
   AircraftState,
   AircraftPerformance,
+  AirportData,
   WeatherState,
   WindLayer,
   Position,
@@ -15,6 +16,7 @@ import {
   knotsToNmPerSecond,
   fpmToFps,
   glideslopeAltitude,
+  crossTrackDistance,
 } from '@atc-sim/shared';
 import { performanceDB } from '../data/PerformanceDB.js';
 
@@ -32,6 +34,12 @@ const MAX_HISTORY = 60;
  * Wind effects modify ground track and groundspeed.
  */
 export class PhysicsEngine {
+  private airportData: AirportData | null = null;
+
+  setAirportData(data: AirportData): void {
+    this.airportData = data;
+  }
+
   /**
    * Update a single aircraft for one tick.
    * Mutates the aircraft state in-place and returns it.
@@ -59,6 +67,10 @@ export class PhysicsEngine {
 
     // 5. Move aircraft position
     this.updatePosition(ac, wind, tas, dt);
+
+    // 5b. Snap to localizer centerline when established — treats the beam as a
+    //     rail so position is exact regardless of wind drift or heading lag.
+    this.snapToLocalizerCenterline(ac);
 
     // 6. Update history trail
     this.updateHistory(ac);
@@ -145,8 +157,10 @@ export class PhysicsEngine {
         (ac.groundspeed / 60) * 6076.12 * Math.tan((gsAngle * Math.PI) / 180);
       // deviation > 0 → above GS → descend faster; < 0 → below → descend slower
       const deviation = ac.altitude - ac.targetAltitude;
-      // 3 fpm per foot of deviation gives ~20s half-life convergence
-      const correctionFpm = deviation * 3;
+      // 5 fpm per foot of deviation gives ~12s half-life convergence.
+      // This ensures aircraft that capture GS high converge quickly enough
+      // to reach landing altitude before the threshold.
+      const correctionFpm = deviation * 5;
       const targetVS = -(nominalVS + correctionFpm);
 
       // Smoothly transition vertical speed
@@ -341,6 +355,134 @@ export class PhysicsEngine {
     const distanceNm = knotsToNmPerSecond(gs) * dt;
 
     ac.position = destinationPoint(ac.position, track, distanceNm);
+  }
+
+  /**
+   * Update a departure aircraft during the takeoff roll.
+   * Accelerates along runway heading until rotation speed, then marks liftoff.
+   * Returns true when the aircraft has lifted off.
+   */
+  updateTakeoffRoll(ac: AircraftState, dt: number = TICK_SECONDS): boolean {
+    const perf = performanceDB.getOrDefault(ac.typeDesignator);
+    const vRotate = Math.min(perf.speed.vapp + 20, 155);
+    const accelRate = 4; // kts/sec — typical takeoff roll acceleration
+
+    ac.targetSpeed = vRotate + 10; // V2
+    ac.speed = Math.min(ac.speed + accelRate * dt, ac.targetSpeed);
+    ac.groundspeed = ac.speed;
+
+    // Move along runway heading during roll
+    const distanceNm = knotsToNmPerSecond(ac.groundspeed) * dt;
+    if (distanceNm > 0.0001) {
+      ac.position = destinationPoint(ac.position, ac.heading, distanceNm);
+    }
+
+    // Snap to centerline — wheels keep the aircraft on the pavement regardless of wind
+    this.snapToRunwayCenterline(ac);
+
+    this.updateHistory(ac);
+
+    // Liftoff when at rotation speed
+    if (ac.speed >= vRotate) {
+      ac.onGround = false;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Update a landed aircraft rolling out on the runway.
+   * Decelerates from touchdown speed to taxi speed, moves along runway heading.
+   */
+  updateGroundRollout(ac: AircraftState, dt: number = TICK_SECONDS): void {
+    // Deceleration: 4 kts/sec above 60kts (reversers + brakes), 2 kts/sec below
+    const decelRate = ac.speed > 60 ? 4 : 2;
+    const targetSpeed = ac.targetSpeed; // 15 kts taxi speed
+
+    if (ac.speed > targetSpeed) {
+      ac.speed = Math.max(targetSpeed, ac.speed - decelRate * dt);
+    }
+    ac.groundspeed = ac.speed;
+
+    // Move along runway heading
+    const distanceNm = knotsToNmPerSecond(ac.groundspeed) * dt;
+    if (distanceNm > 0.0001) {
+      ac.position = destinationPoint(ac.position, ac.heading, distanceNm);
+      ac.rolloutDistanceNm = (ac.rolloutDistanceNm ?? 0) + distanceNm;
+    }
+
+    // Snap to centerline — wheels keep the aircraft on the pavement regardless of approach crab
+    this.snapToRunwayCenterline(ac);
+
+    // Update history trail (so radar shows ground movement)
+    this.updateHistory(ac);
+  }
+
+  /**
+   * Snap an established ILS/RNAV aircraft's position onto the exact localizer
+   * centerline extended from the runway threshold.  Called every tick once
+   * ac.onLocalizer is true — acts as a "rail" so any lateral error from wind
+   * drift, heading lag, or discrete-time numerics is corrected immediately.
+   * Wind crab is handled implicitly: the heading controller targets locCourse,
+   * wind pushes the aircraft off laterally, and this snap pulls it back, which
+   * is exactly how a real autopilot in LOC TRACK mode behaves.
+   */
+  private snapToLocalizerCenterline(ac: AircraftState): void {
+    if (!ac.onLocalizer || !this.airportData) return;
+    // Only snap for ILS approaches — RNAV/Visual paths aren't a straight beam
+    // from threshold outward, so the ILS-centerline formula doesn't apply.
+    if (ac.clearances.approach?.type !== 'ILS') return;
+    const runway = this.airportData.runways.find(
+      r => r.id === ac.clearances.approach?.runway
+    );
+    if (!runway) return;
+
+    // Use true bearing from actual coordinates — ilsCourse/heading are magnetic,
+    // but destinationPoint/crossTrackDistance require true bearings.
+    const locCourse = initialBearing(runway.threshold, runway.end);
+    const thresholdPos = runway.threshold;
+    const reciprocal = normalizeHeading(locCourse + 180);
+    // A far point well behind the aircraft on the inbound track
+    const farPoint = destinationPoint(thresholdPos, reciprocal, 60);
+
+    const signedXtk = crossTrackDistance(ac.position, farPoint, thresholdPos);
+    if (Math.abs(signedXtk) < 0.001) return; // already on centerline
+
+    // Guard: ignore very large deviations — the aircraft is not yet established.
+    if (Math.abs(signedXtk) > 0.5) return;
+
+    // Apply at most 0.04nm of correction per tick (≈240ft at 1Hz) so the snap
+    // is completely imperceptible even at first capture. Over ~10 ticks the
+    // aircraft settles exactly on centreline.
+    const MAX_SNAP_NM = 0.04;
+    const correction = Math.sign(signedXtk) * Math.min(Math.abs(signedXtk), MAX_SNAP_NM);
+    const perpHeading = normalizeHeading(locCourse + 90);
+    ac.position = destinationPoint(ac.position, perpHeading, -correction);
+  }
+
+  /**
+   * Project the aircraft's position onto the exact runway centerline.
+   * Used during ground roll (takeoff) and landing rollout to eliminate any
+   * lateral drift from wind or approach crab angles at touchdown.
+   */
+  private snapToRunwayCenterline(ac: AircraftState): void {
+    if (!this.airportData) return;
+    const runway = this.airportData.runways.find(r => r.id === ac.flightPlan.runway);
+    if (!runway) return;
+
+    // Use the actual geographic bearing from threshold to end — this is the
+    // same direction the MapLayer uses to draw the runway line, so the aircraft
+    // dot will sit exactly on the rendered runway rather than being offset by
+    // any difference between runway.heading (magnetic) and the true geo bearing.
+    const runwayBearing = initialBearing(runway.threshold, runway.end);
+
+    const bearingToAc = initialBearing(runway.threshold, ac.position);
+    const dist = haversineDistance(runway.threshold, ac.position);
+    const angleDiffRad = headingDifference(runwayBearing, bearingToAc) * Math.PI / 180;
+    const alongTrack = Math.max(0, dist * Math.cos(angleDiffRad));
+
+    // Set position to exactly that point on the centerline
+    ac.position = destinationPoint(runway.threshold, runwayBearing, alongTrack);
   }
 
   private updateHistory(ac: AircraftState): void {

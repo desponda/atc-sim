@@ -1,6 +1,7 @@
 import type {
   AircraftState,
   AircraftPerformance,
+  AirportData,
   FlightPlan,
   Clearances,
   Position,
@@ -30,6 +31,7 @@ function defaultClearances(): Clearances {
     expectedApproach: null,
     maintainUntilEstablished: null,
     handoffFrequency: null,
+    handoffFacility: null,
   };
 }
 
@@ -124,11 +126,60 @@ export class AircraftManager {
   }
 
   /** Remove aircraft that have left the airspace or landed */
-  cleanup(): string[] {
+  /** Tick counter for landed aircraft delay */
+  private tickCount = 0;
+
+  /** Increment tick counter — call once per sim tick */
+  incrementTick(): void {
+    this.tickCount++;
+  }
+
+  cleanup(airportData?: AirportData): string[] {
     const removed: string[] = [];
     for (const [id, ac] of this.aircraft) {
-      // Remove landed aircraft after a delay
+      // Landed aircraft: check for runway exit
       if (ac.flightPhase === 'landed') {
+        if (ac.runwayOccupying && airportData) {
+          // Check if aircraft has exited the runway
+          const runway = airportData.runways.find(r => r.id === ac.runwayOccupying);
+          const rwyLengthNm = runway ? runway.length / 6076.12 : 1.5;
+          const rolloutDist = ac.rolloutDistanceNm ?? 0;
+
+          // Exit when rolled 2/3 of runway OR slowed to taxi speed
+          if (rolloutDist >= rwyLengthNm * (2 / 3) || ac.speed <= 16) {
+            ac.runwayOccupying = undefined;
+            ac.flightPhase = 'ground';
+          } else {
+            continue; // Still rolling out
+          }
+        }
+        // Once off the runway (ground phase), keep for a few ticks then remove
+        if (ac.flightPhase === 'ground' || !ac.runwayOccupying) {
+          const groundTick = (ac as any)._groundTick;
+          if (groundTick === undefined) {
+            (ac as any)._groundTick = this.tickCount;
+            continue;
+          }
+          if (this.tickCount - groundTick < 20) {
+            continue; // Keep for 20 ticks after exiting runway
+          }
+          removed.push(id);
+          this.aircraft.delete(id);
+          continue;
+        }
+        continue;
+      }
+
+      // Ground phase aircraft (already transitioned from landed)
+      if (ac.flightPhase === 'ground') {
+        const groundTick = (ac as any)._groundTick;
+        if (groundTick === undefined) {
+          (ac as any)._groundTick = this.tickCount;
+          continue;
+        }
+        if (this.tickCount - groundTick < 20) {
+          continue;
+        }
         removed.push(id);
         this.aircraft.delete(id);
         continue;

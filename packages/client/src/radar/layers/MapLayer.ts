@@ -1,4 +1,4 @@
-import type { AirportData, Fix, Runway, SID, STAR, AirspaceBoundary, ProcedureLeg, VideoMap, VideoMapFeature } from '@atc-sim/shared';
+import type { AirportData, Fix, Runway, SID, STAR, AirspaceBoundary, ProcedureLeg, VideoMap, VideoMapFeature, Approach, AltitudeConstraint } from '@atc-sim/shared';
 import { STARSColors, STARSFonts, STARSSizes, STARSGlow } from '../rendering/STARSTheme';
 import { Projection } from '../rendering/Projection';
 
@@ -67,8 +67,14 @@ export class MapLayer {
     if (this.options.showSTARs) {
       this.drawProcedures(this.airportData.stars, 'STAR');
     }
+    // Approach fixes (IAF/FAF) are always drawn for controller reference.
+    // Collect rendered fix IDs so drawFixes() skips duplicates.
+    const approachFixIds = this.airportData.approaches?.length
+      ? this.drawApproachFixes(this.airportData.approaches)
+      : new Set<string>();
+
     if (this.options.showFixes) {
-      this.drawFixes(this.airportData.fixes);
+      this.drawFixes(this.airportData.fixes.filter(f => !approachFixIds.has(f.id)));
       this.drawFixes(
         this.airportData.navaids.map((n) => ({ ...n, type: 'navaid' as const }))
       );
@@ -394,6 +400,140 @@ export class MapLayer {
         lastPos = pos;
       }
     }
+  }
+
+  /**
+   * Extracts the altitude value from an altitude constraint (always returns the
+   * "at or above" / "at" baseline altitude, or the min of a between constraint).
+   */
+  private constraintAlt(c: AltitudeConstraint): number {
+    if (c.type === 'between') return c.min;
+    return c.altitude;
+  }
+
+  /**
+   * Always-visible approach fix overlay: marks IAF and FAF for each approach
+   * procedure so controllers can easily reference them when issuing clearances.
+   *
+   * Symbols:
+   *   IAF – open circle (where radar vectors may begin)
+   *   FAF – open diamond (the crossing fix for approach clearances)
+   *   INT – small "×" cross (intermediate fixes)
+   *
+   * Each fix is labelled with its identifier and altitude constraint.
+   */
+  private drawApproachFixes(approaches: Approach[]): Set<string> {
+    const ctx = this.ctx;
+
+    // Approach-fix colour: dim cyan-blue, distinct from normal waypoints
+    const COLOR = '#007799';
+
+    // Role priority: FAF > IAF > INT (for de-duplication)
+    const ROLE_PRIORITY: Record<string, number> = { FAF: 3, IAF: 2, INT: 1 };
+
+    interface ApproachFix {
+      fix: Fix;
+      role: 'IAF' | 'FAF' | 'INT';
+      altitude?: number;
+      altSuffix: string; // '+', '-', or ''
+    }
+
+    const fixMap = new Map<string, ApproachFix>();
+
+    const upsert = (
+      fix: Fix,
+      role: 'IAF' | 'FAF' | 'INT',
+      constraint?: AltitudeConstraint
+    ) => {
+      const existing = fixMap.get(fix.id);
+      if (existing && ROLE_PRIORITY[existing.role] >= ROLE_PRIORITY[role]) return;
+      let altitude: number | undefined;
+      let altSuffix = '';
+      if (constraint) {
+        altitude = this.constraintAlt(constraint);
+        altSuffix = constraint.type === 'atOrAbove' ? '+' : constraint.type === 'atOrBelow' ? '-' : '';
+      }
+      fixMap.set(fix.id, { fix, role, altitude, altSuffix });
+    };
+
+    for (const approach of approaches) {
+      // Main approach legs (skip runway endpoint fixes)
+      const legs = approach.legs.filter(l => l.fix && l.fix.type !== 'runway');
+      for (let i = 0; i < legs.length; i++) {
+        const leg = legs[i];
+        if (!leg.fix) continue;
+        const role: 'IAF' | 'FAF' | 'INT' =
+          i === 0 ? 'IAF' : i === legs.length - 1 ? 'FAF' : 'INT';
+        upsert(leg.fix, role, leg.altitudeConstraint);
+      }
+
+      // Approach transitions (IAFs accessed via a feeder route)
+      for (const trans of approach.transitions) {
+        const tLegs = trans.legs.filter(l => l.fix && l.fix.type !== 'runway');
+        if (tLegs.length === 0) continue;
+        // First leg of a transition is an IAF
+        const tIAF = tLegs[0];
+        if (tIAF.fix) upsert(tIAF.fix, 'IAF', tIAF.altitudeConstraint);
+      }
+    }
+
+    ctx.lineWidth = 1;
+    ctx.font = `9px ${STARSFonts.family}`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.shadowBlur = STARSGlow.map;
+    ctx.shadowColor = STARSColors.glow;
+    ctx.strokeStyle = COLOR;
+    ctx.fillStyle = COLOR;
+
+    for (const { fix, role, altitude, altSuffix } of fixMap.values()) {
+      const pos = this.projection.project(fix.position);
+      const s = 5; // half-size of marker
+
+      ctx.strokeStyle = COLOR;
+      ctx.fillStyle = COLOR;
+      ctx.beginPath();
+
+      if (role === 'IAF') {
+        // Open circle
+        ctx.arc(pos.x, pos.y, s, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (role === 'FAF') {
+        // Open diamond (rotated square)
+        ctx.moveTo(pos.x,     pos.y - s);
+        ctx.lineTo(pos.x + s, pos.y);
+        ctx.lineTo(pos.x,     pos.y + s);
+        ctx.lineTo(pos.x - s, pos.y);
+        ctx.closePath();
+        ctx.stroke();
+      } else {
+        // INT: small × cross
+        const arm = 3;
+        ctx.moveTo(pos.x - arm, pos.y - arm);
+        ctx.lineTo(pos.x + arm, pos.y + arm);
+        ctx.moveTo(pos.x + arm, pos.y - arm);
+        ctx.lineTo(pos.x - arm, pos.y + arm);
+        ctx.stroke();
+      }
+
+      // Fix label (upper-right of marker)
+      ctx.fillStyle = COLOR;
+      const labelX = pos.x + s + 2;
+      const labelY = pos.y - s;
+      ctx.fillText(fix.id, labelX, labelY);
+
+      // Altitude label (one line below fix id, slightly dimmer)
+      if (altitude !== undefined) {
+        ctx.globalAlpha = 0.75;
+        ctx.fillText(`${altitude}${altSuffix}`, labelX, labelY + 9);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+
+    return new Set(fixMap.keys());
   }
 
   private drawAirspace(boundaries: AirspaceBoundary[]): void {

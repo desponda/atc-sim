@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react';
 import { getGameClient } from '../network/GameClient';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
-import type { SessionConfig, TrafficDensity, ScenarioType, WeatherState } from '@atc-sim/shared';
+import type { SessionConfig, TrafficDensity, ScenarioType } from '@atc-sim/shared';
+import { generateRandomWeather, wxCategoryColor } from './weatherGen';
 
 const containerStyle: React.CSSProperties = {
   width: '100%',
@@ -108,14 +109,6 @@ const startButtonStyle: React.CSSProperties = {
   textTransform: 'uppercase',
 };
 
-const defaultWeather: WeatherState = {
-  winds: [{ altitude: 0, direction: 200, speed: 8, gusts: null }],
-  altimeter: 29.92,
-  temperature: 15,
-  visibility: 10,
-  ceiling: null,
-  atisLetter: 'A',
-};
 
 interface SessionPanelProps {
   onStart?: () => void;
@@ -127,8 +120,9 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [scenarioType, setScenarioType] = useState<ScenarioType>('mixed');
   const [arrRunway, setArrRunway] = useState('16');
   const [depRunway, setDepRunway] = useState('16');
-  const [windDir, setWindDir] = useState(200);
-  const [windSpd, setWindSpd] = useState(8);
+  const [wxConditions, setWxConditions] = useState(() => generateRandomWeather());
+
+  const rerollWeather = useCallback(() => setWxConditions(generateRandomWeather()), []);
 
   const handleStart = useCallback(() => {
     const config: SessionConfig = {
@@ -139,15 +133,12 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         arrivalRunways: [arrRunway],
         departureRunways: [depRunway],
       },
-      weather: {
-        ...defaultWeather,
-        winds: [{ altitude: 0, direction: windDir, speed: windSpd, gusts: null }],
-      },
+      weather: wxConditions.weather,
     };
 
     getGameClient().createSession(config);
     onStart?.();
-  }, [airport, density, scenarioType, arrRunway, depRunway, windDir, windSpd, onStart]);
+  }, [airport, density, scenarioType, arrRunway, depRunway, wxConditions, onStart]);
 
   return (
     <div style={containerStyle}>
@@ -210,28 +201,54 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* Wind */}
+        {/* Weather */}
         <div style={fieldGroupStyle}>
-          <label style={labelStyle}>SURFACE WIND</label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input
-              type="number"
-              value={windDir}
-              onChange={(e) => setWindDir(Math.max(0, Math.min(360, parseInt(e.target.value) || 0)))}
-              style={inputFieldStyle}
-              min={0}
-              max={360}
-            />
-            <span style={{ color: STARSColors.dimText }}>@</span>
-            <input
-              type="number"
-              value={windSpd}
-              onChange={(e) => setWindSpd(Math.max(0, Math.min(50, parseInt(e.target.value) || 0)))}
-              style={{ ...inputFieldStyle, width: 60 }}
-              min={0}
-              max={50}
-            />
-            <span style={{ color: STARSColors.dimText }}>KT</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <label style={{ ...labelStyle, marginBottom: 0 }}>WEATHER CONDITIONS</label>
+            <button
+              onClick={rerollWeather}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${STARSColors.panelBorder}`,
+                color: STARSColors.dimText,
+                fontFamily: STARSFonts.family,
+                fontSize: 9,
+                padding: '2px 7px',
+                cursor: 'pointer',
+                letterSpacing: 1,
+              }}
+            >
+              RE-ROLL
+            </button>
+          </div>
+          <div style={{
+            border: `1px solid ${STARSColors.panelBorder}`,
+            padding: '7px 10px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: wxCategoryColor(wxConditions.category), fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
+                {wxConditions.category}
+              </span>
+              <span style={{ color: STARSColors.dimText, fontSize: 10 }}>{wxConditions.description}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 14, fontSize: 11, color: STARSColors.normal }}>
+              <span>
+                {String(wxConditions.weather.winds[0]?.direction ?? 0).padStart(3, '0')}°
+                {' / '}
+                {wxConditions.weather.winds[0]?.speed ?? 0}kt
+                {wxConditions.weather.winds[0]?.gusts ? ` G${wxConditions.weather.winds[0].gusts}kt` : ''}
+              </span>
+              <span>VIS {wxConditions.weather.visibility} SM</span>
+              <span>
+                {wxConditions.weather.ceiling === null
+                  ? 'CLR'
+                  : `OVC ${wxConditions.weather.ceiling} ft`}
+              </span>
+              <span>ALT {wxConditions.weather.altimeter.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 

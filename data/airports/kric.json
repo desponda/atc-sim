@@ -1,16 +1,24 @@
 {
   "icao": "KRIC",
   "name": "Richmond International Airport",
-  "position": { "lat": 37.505181, "lon": -77.319739 },
+  "position": {
+    "lat": 37.505181,
+    "lon": -77.319739
+  },
   "elevation": 167,
   "magneticVariation": -10.0,
-
   "runways": [
     {
       "id": "16",
       "heading": 157,
-      "threshold": { "lat": 37.516636, "lon": -77.323578 },
-      "end": { "lat": 37.495792, "lon": -77.306883 },
+      "threshold": {
+        "lat": 37.516636,
+        "lon": -77.323578
+      },
+      "end": {
+        "lat": 37.495792,
+        "lon": -77.306883
+      },
       "length": 9003,
       "width": 150,
       "elevation": 167,
@@ -23,8 +31,14 @@
     {
       "id": "34",
       "heading": 337,
-      "threshold": { "lat": 37.495792, "lon": -77.306883 },
-      "end": { "lat": 37.516636, "lon": -77.323578 },
+      "threshold": {
+        "lat": 37.495792,
+        "lon": -77.306883
+      },
+      "end": {
+        "lat": 37.516636,
+        "lon": -77.323578
+      },
       "length": 9003,
       "width": 150,
       "elevation": 161,
@@ -37,8 +51,14 @@
     {
       "id": "02",
       "heading": 23,
-      "threshold": { "lat": 37.498872, "lon": -77.329658 },
-      "end": { "lat": 37.516519, "lon": -77.324356 },
+      "threshold": {
+        "lat": 37.498872,
+        "lon": -77.329658
+      },
+      "end": {
+        "lat": 37.516519,
+        "lon": -77.324356
+      },
       "length": 6607,
       "width": 150,
       "elevation": 159,
@@ -51,120 +71,741 @@
     {
       "id": "20",
       "heading": 203,
-      "threshold": { "lat": 37.516519, "lon": -77.324356 },
-      "end": { "lat": 37.498872, "lon": -77.329658 },
+      "threshold": {
+        "lat": 37.516519,
+        "lon": -77.324356
+      },
+      "end": {
+        "lat": 37.498872,
+        "lon": -77.329658
+      },
       "length": 6607,
       "width": 150,
       "elevation": 165,
       "ilsAvailable": false
     }
   ],
-
   "frequencies": {
     "atis": 119.15,
-    "approach": [126.4, 126.75],
-    "tower": [121.1],
-    "ground": [121.9],
-    "departure": [126.4, 126.75],
-    "center": [128.55, 133.65]
+    "approach": [
+      126.4,
+      126.75
+    ],
+    "tower": [
+      121.1
+    ],
+    "ground": [
+      121.9
+    ],
+    "departure": [
+      126.4,
+      126.75
+    ],
+    "center": [
+      128.55,
+      133.65
+    ]
   },
-
   "fixes": [
-    { "id": "AANNN", "type": "waypoint", "position": { "lat": 37.596389, "lon": -77.226881 } },
-    { "id": "AAVVA", "type": "waypoint", "position": { "lat": 37.607461, "lon": -77.396394 } },
-    { "id": "ACILI", "type": "waypoint", "position": { "lat": 37.461833, "lon": -77.444081 } },
-    { "id": "AHONE", "type": "waypoint", "position": { "lat": 37.484028, "lon": -78.071781 } },
-    { "id": "AYDEE", "type": "waypoint", "position": { "lat": 37.566581, "lon": -77.239236 } },
-    { "id": "BAIRR", "type": "waypoint", "position": { "lat": 37.348128, "lon": -77.317119 } },
-    { "id": "BAYLY", "type": "waypoint", "position": { "lat": 37.658094, "lon": -77.087575 } },
-    { "id": "BECAB", "type": "waypoint", "position": { "lat": 37.503169, "lon": -77.220772 } },
-    { "id": "BEKKY", "type": "waypoint", "position": { "lat": 37.513192, "lon": -77.428725 } },
-    { "id": "BUNKK", "type": "waypoint", "position": { "lat": 37.526036, "lon": -77.064994 } },
-    { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-    { "id": "COVSO", "type": "waypoint", "position": { "lat": 37.400133, "lon": -77.270542 } },
-    { "id": "DEEER", "type": "waypoint", "position": { "lat": 37.632028, "lon": -77.665628 } },
-    { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } },
-    { "id": "DXOON", "type": "waypoint", "position": { "lat": 37.770786, "lon": -78.500864 } },
-    { "id": "EAARL", "type": "waypoint", "position": { "lat": 37.413711, "lon": -77.407503 } },
-    { "id": "EEMIL", "type": "waypoint", "position": { "lat": 37.427008, "lon": -77.217592 } },
-    { "id": "EMWHY", "type": "waypoint", "position": { "lat": 37.42635, "lon": -77.470394 } },
-    { "id": "ESORE", "type": "waypoint", "position": { "lat": 37.628039, "lon": -77.364472 } },
-    { "id": "FEMAP", "type": "waypoint", "position": { "lat": 37.244, "lon": -77.280911 } },
-    { "id": "FIBUG", "type": "waypoint", "position": { "lat": 37.617258, "lon": -77.404311 } },
-    { "id": "FISSR", "type": "waypoint", "position": { "lat": 37.443239, "lon": -77.346358 } },
-    { "id": "FOBON", "type": "waypoint", "position": { "lat": 37.607517, "lon": -77.296958 } },
-    { "id": "GORDD", "type": "waypoint", "position": { "lat": 37.547581, "lon": -77.348378 } },
-    { "id": "GRUTO", "type": "waypoint", "position": { "lat": 37.345661, "lon": -78.777483 } },
-    { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
-    { "id": "HAYYU", "type": "waypoint", "position": { "lat": 37.729553, "lon": -76.702344 } },
-    { "id": "HEMME", "type": "waypoint", "position": { "lat": 37.687528, "lon": -78.106639 } },
-    { "id": "HIBOM", "type": "waypoint", "position": { "lat": 37.7813, "lon": -77.395717 } },
-    { "id": "HONTA", "type": "waypoint", "position": { "lat": 37.419728, "lon": -78.398192 } },
-    { "id": "HORNR", "type": "waypoint", "position": { "lat": 37.618731, "lon": -77.398111 } },
-    { "id": "HUGHS", "type": "waypoint", "position": { "lat": 37.552281, "lon": -77.205819 } },
-    { "id": "IDONE", "type": "waypoint", "position": { "lat": 37.405378, "lon": -77.234733 } },
-    { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
-    { "id": "IGANE", "type": "waypoint", "position": { "lat": 37.239722, "lon": -77.288703 } },
-    { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
-    { "id": "ITTEM", "type": "waypoint", "position": { "lat": 37.471939, "lon": -77.554572 } },
-    { "id": "JADNN", "type": "waypoint", "position": { "lat": 37.568206, "lon": -77.175864 } },
-    { "id": "JESTY", "type": "waypoint", "position": { "lat": 37.407567, "lon": -77.357053 } },
-    { "id": "JOMUS", "type": "waypoint", "position": { "lat": 37.430178, "lon": -77.254417 } },
-    { "id": "JUVPO", "type": "waypoint", "position": { "lat": 37.304369, "lon": -77.154122 } },
-    { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } },
-    { "id": "KAMMI", "type": "waypoint", "position": { "lat": 37.907931, "lon": -76.908839 } },
-    { "id": "KEGME", "type": "waypoint", "position": { "lat": 37.477772, "lon": -77.150419 } },
-    { "id": "KELCE", "type": "waypoint", "position": { "lat": 37.185106, "lon": -77.916314 } },
-    { "id": "LJAAY", "type": "waypoint", "position": { "lat": 37.394464, "lon": -77.360981 } },
-    { "id": "LUCYL", "type": "waypoint", "position": { "lat": 38.089972, "lon": -76.677522 } },
-    { "id": "MANDM", "type": "waypoint", "position": { "lat": 37.401333, "lon": -77.269956 } },
-    { "id": "MUGAW", "type": "waypoint", "position": { "lat": 37.57185, "lon": -77.307706 } },
-    { "id": "NEAVL", "type": "waypoint", "position": { "lat": 36.978861, "lon": -77.758283 } },
-    { "id": "OPUKE", "type": "waypoint", "position": { "lat": 37.564275, "lon": -77.361767 } },
-    { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } },
-    { "id": "PULDY", "type": "waypoint", "position": { "lat": 37.131042, "lon": -77.644394 } },
-    { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } },
-    { "id": "REDNG", "type": "waypoint", "position": { "lat": 37.712961, "lon": -78.230544 } },
-    { "id": "RUPRT", "type": "waypoint", "position": { "lat": 37.638789, "lon": -77.759203 } },
-    { "id": "RUTLD", "type": "waypoint", "position": { "lat": 37.385625, "lon": -77.328314 } },
-    { "id": "SANNY", "type": "waypoint", "position": { "lat": 37.000719, "lon": -79.555853 } },
-    { "id": "SEZZZ", "type": "waypoint", "position": { "lat": 37.576964, "lon": -77.434147 } },
-    { "id": "SJAYY", "type": "waypoint", "position": { "lat": 37.670867, "lon": -77.1483 } },
-    { "id": "SKULK", "type": "waypoint", "position": { "lat": 37.609181, "lon": -77.273406 } },
-    { "id": "SOOBY", "type": "waypoint", "position": { "lat": 37.625461, "lon": -77.530794 } },
-    { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-    { "id": "SUGGR", "type": "waypoint", "position": { "lat": 37.487483, "lon": -77.558081 } },
-    { "id": "THINA", "type": "waypoint", "position": { "lat": 37.327097, "lon": -77.650317 } },
-    { "id": "TIRTL", "type": "waypoint", "position": { "lat": 37.673947, "lon": -77.329225 } },
-    { "id": "TONEO", "type": "waypoint", "position": { "lat": 37.549025, "lon": -77.488992 } },
-    { "id": "TRKEY", "type": "waypoint", "position": { "lat": 37.474164, "lon": -77.142567 } },
-    { "id": "TRUIT", "type": "waypoint", "position": { "lat": 37.723083, "lon": -77.456447 } },
-    { "id": "TTIMM", "type": "waypoint", "position": { "lat": 37.588389, "lon": -77.448161 } },
-    { "id": "TYROX", "type": "waypoint", "position": { "lat": 37.621264, "lon": -77.292764 } },
-    { "id": "UDADE", "type": "waypoint", "position": { "lat": 37.602569, "lon": -77.366083 } },
-    { "id": "VARMT", "type": "waypoint", "position": { "lat": 37.401175, "lon": -77.390492 } },
-    { "id": "VETEC", "type": "waypoint", "position": { "lat": 37.450394, "lon": -78.239533 } },
-    { "id": "WAKAL", "type": "waypoint", "position": { "lat": 37.683517, "lon": -77.574786 } },
-    { "id": "WLOCK", "type": "waypoint", "position": { "lat": 37.307356, "lon": -78.970442 } },
-    { "id": "WOWSR", "type": "waypoint", "position": { "lat": 37.447853, "lon": -77.268539 } },
-    { "id": "YEVUS", "type": "waypoint", "position": { "lat": 37.439808, "lon": -77.188636 } },
-    { "id": "YUTUP", "type": "waypoint", "position": { "lat": 37.476097, "lon": -77.291122 } },
-    { "id": "ZAXET", "type": "waypoint", "position": { "lat": 37.580656, "lon": -77.386803 } },
-    { "id": "ZUMAT", "type": "waypoint", "position": { "lat": 37.828747, "lon": -78.775192 } },
-    { "id": "CFDTG", "type": "waypoint", "position": { "lat": 37.645444, "lon": -77.426972 } },
-    { "id": "CFBNC", "type": "waypoint", "position": { "lat": 37.586722, "lon": -77.317586 } },
-    { "id": "CFBND", "type": "waypoint", "position": { "lat": 37.425425, "lon": -77.312653 } },
-    { "id": "CFBNF", "type": "waypoint", "position": { "lat": 37.470264, "lon": -77.2244 } },
-    { "id": "CFBNJ", "type": "waypoint", "position": { "lat": 37.433914, "lon": -77.297514 } }
+    {
+      "id": "AANNN",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.596389,
+        "lon": -77.226881
+      }
+    },
+    {
+      "id": "AAVVA",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.607461,
+        "lon": -77.396394
+      }
+    },
+    {
+      "id": "ACILI",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.461833,
+        "lon": -77.444081
+      }
+    },
+    {
+      "id": "AHONE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.484028,
+        "lon": -78.071781
+      }
+    },
+    {
+      "id": "AYDEE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.566581,
+        "lon": -77.239236
+      }
+    },
+    {
+      "id": "BAIRR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.348128,
+        "lon": -77.317119
+      }
+    },
+    {
+      "id": "BAYLY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.658094,
+        "lon": -77.087575
+      }
+    },
+    {
+      "id": "BECAB",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.503169,
+        "lon": -77.220772
+      }
+    },
+    {
+      "id": "BEKKY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.513192,
+        "lon": -77.428725
+      }
+    },
+    {
+      "id": "BUNKK",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.526036,
+        "lon": -77.064994
+      }
+    },
+    {
+      "id": "CASEE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.301033,
+        "lon": -77.388928
+      }
+    },
+    {
+      "id": "COVSO",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.400133,
+        "lon": -77.270542
+      }
+    },
+    {
+      "id": "DEEER",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.632028,
+        "lon": -77.665628
+      }
+    },
+    {
+      "id": "DUCXS",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.463111,
+        "lon": -77.654444
+      }
+    },
+    {
+      "id": "DXOON",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.770786,
+        "lon": -78.500864
+      }
+    },
+    {
+      "id": "EAARL",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.413711,
+        "lon": -77.407503
+      }
+    },
+    {
+      "id": "EEMIL",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.427008,
+        "lon": -77.217592
+      }
+    },
+    {
+      "id": "EMWHY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.42635,
+        "lon": -77.470394
+      }
+    },
+    {
+      "id": "ESORE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.628039,
+        "lon": -77.364472
+      }
+    },
+    {
+      "id": "FEMAP",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.244,
+        "lon": -77.280911
+      }
+    },
+    {
+      "id": "FIBUG",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.617258,
+        "lon": -77.404311
+      }
+    },
+    {
+      "id": "FISSR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.443239,
+        "lon": -77.346358
+      }
+    },
+    {
+      "id": "FOBON",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.607517,
+        "lon": -77.296958
+      }
+    },
+    {
+      "id": "GORDD",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.547581,
+        "lon": -77.348378
+      }
+    },
+    {
+      "id": "GRUTO",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.345661,
+        "lon": -78.777483
+      }
+    },
+    {
+      "id": "HAGLI",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.345619,
+        "lon": -77.186961
+      }
+    },
+    {
+      "id": "HAYYU",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.729553,
+        "lon": -76.702344
+      }
+    },
+    {
+      "id": "HEMME",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.687528,
+        "lon": -78.106639
+      }
+    },
+    {
+      "id": "HIBOM",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.7813,
+        "lon": -77.395717
+      }
+    },
+    {
+      "id": "HONTA",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.419728,
+        "lon": -78.398192
+      }
+    },
+    {
+      "id": "HORNR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.618731,
+        "lon": -77.398111
+      }
+    },
+    {
+      "id": "HUGHS",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.552281,
+        "lon": -77.205819
+      }
+    },
+    {
+      "id": "IDONE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.405378,
+        "lon": -77.234733
+      }
+    },
+    {
+      "id": "IFPIG",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.701803,
+        "lon": -77.472347
+      }
+    },
+    {
+      "id": "IGANE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.239722,
+        "lon": -77.288703
+      }
+    },
+    {
+      "id": "IMASE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.686894,
+        "lon": -77.273
+      }
+    },
+    {
+      "id": "ITTEM",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.471939,
+        "lon": -77.554572
+      }
+    },
+    {
+      "id": "JADNN",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.568206,
+        "lon": -77.175864
+      }
+    },
+    {
+      "id": "JESTY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.407567,
+        "lon": -77.357053
+      }
+    },
+    {
+      "id": "JOMUS",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.430178,
+        "lon": -77.254417
+      }
+    },
+    {
+      "id": "JUVPO",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.304369,
+        "lon": -77.154122
+      }
+    },
+    {
+      "id": "KALLI",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.465139,
+        "lon": -77.647458
+      }
+    },
+    {
+      "id": "KAMMI",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.907931,
+        "lon": -76.908839
+      }
+    },
+    {
+      "id": "KEGME",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.477772,
+        "lon": -77.150419
+      }
+    },
+    {
+      "id": "KELCE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.185106,
+        "lon": -77.916314
+      }
+    },
+    {
+      "id": "LJAAY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.394464,
+        "lon": -77.360981
+      }
+    },
+    {
+      "id": "LUCYL",
+      "type": "waypoint",
+      "position": {
+        "lat": 38.089972,
+        "lon": -76.677522
+      }
+    },
+    {
+      "id": "MANDM",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.401333,
+        "lon": -77.269956
+      }
+    },
+    {
+      "id": "MUGAW",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.57185,
+        "lon": -77.307706
+      }
+    },
+    {
+      "id": "NEAVL",
+      "type": "waypoint",
+      "position": {
+        "lat": 36.978861,
+        "lon": -77.758283
+      }
+    },
+    {
+      "id": "OPUKE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.564275,
+        "lon": -77.361767
+      }
+    },
+    {
+      "id": "POWTN",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.508292,
+        "lon": -77.9491
+      }
+    },
+    {
+      "id": "PULDY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.131042,
+        "lon": -77.644394
+      }
+    },
+    {
+      "id": "READE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.282092,
+        "lon": -78.328844
+      }
+    },
+    {
+      "id": "REDNG",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.712961,
+        "lon": -78.230544
+      }
+    },
+    {
+      "id": "RUPRT",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.638789,
+        "lon": -77.759203
+      }
+    },
+    {
+      "id": "RUTLD",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.385625,
+        "lon": -77.328314
+      }
+    },
+    {
+      "id": "SANNY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.000719,
+        "lon": -79.555853
+      }
+    },
+    {
+      "id": "SEZZZ",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.576964,
+        "lon": -77.434147
+      }
+    },
+    {
+      "id": "SJAYY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.670867,
+        "lon": -77.1483
+      }
+    },
+    {
+      "id": "SKULK",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.609181,
+        "lon": -77.273406
+      }
+    },
+    {
+      "id": "SOOBY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.625461,
+        "lon": -77.530794
+      }
+    },
+    {
+      "id": "SPIDR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.645478,
+        "lon": -77.852833
+      }
+    },
+    {
+      "id": "SUGGR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.487483,
+        "lon": -77.558081
+      }
+    },
+    {
+      "id": "THINA",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.327097,
+        "lon": -77.650317
+      }
+    },
+    {
+      "id": "TIRTL",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.673947,
+        "lon": -77.329225
+      }
+    },
+    {
+      "id": "TONEO",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.549025,
+        "lon": -77.488992
+      }
+    },
+    {
+      "id": "TRKEY",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.474164,
+        "lon": -77.142567
+      }
+    },
+    {
+      "id": "TRUIT",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.723083,
+        "lon": -77.456447
+      }
+    },
+    {
+      "id": "TTIMM",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.588389,
+        "lon": -77.448161
+      }
+    },
+    {
+      "id": "TYROX",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.621264,
+        "lon": -77.292764
+      }
+    },
+    {
+      "id": "UDADE",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.602569,
+        "lon": -77.366083
+      }
+    },
+    {
+      "id": "VARMT",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.401175,
+        "lon": -77.390492
+      }
+    },
+    {
+      "id": "VETEC",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.450394,
+        "lon": -78.239533
+      }
+    },
+    {
+      "id": "WAKAL",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.683517,
+        "lon": -77.574786
+      }
+    },
+    {
+      "id": "WLOCK",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.307356,
+        "lon": -78.970442
+      }
+    },
+    {
+      "id": "WOWSR",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.447853,
+        "lon": -77.268539
+      }
+    },
+    {
+      "id": "YEVUS",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.439808,
+        "lon": -77.188636
+      }
+    },
+    {
+      "id": "YUTUP",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.476097,
+        "lon": -77.291122
+      }
+    },
+    {
+      "id": "ZAXET",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.580656,
+        "lon": -77.386803
+      }
+    },
+    {
+      "id": "ZUMAT",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.828747,
+        "lon": -78.775192
+      }
+    },
+    {
+      "id": "CFDTG",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.645444,
+        "lon": -77.426972
+      }
+    },
+    {
+      "id": "CFBNC",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.586722,
+        "lon": -77.317586
+      }
+    },
+    {
+      "id": "CFBND",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.425425,
+        "lon": -77.312653
+      }
+    },
+    {
+      "id": "CFBNF",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.470264,
+        "lon": -77.2244
+      }
+    },
+    {
+      "id": "CFBNJ",
+      "type": "waypoint",
+      "position": {
+        "lat": 37.433914,
+        "lon": -77.297514
+      }
+    }
   ],
-
   "navaids": [
     {
       "id": "RIC",
       "name": "Richmond",
       "type": "navaid",
       "navaidType": "VORDME",
-      "position": { "lat": 37.502347, "lon": -77.320275 },
+      "position": {
+        "lat": 37.502347,
+        "lon": -77.320275
+      },
       "frequency": 114.1,
       "morseId": ".-. .. -.-.",
       "magneticVariation": -10.0
@@ -174,7 +815,10 @@
       "name": "Flat Rock",
       "type": "navaid",
       "navaidType": "VORDME",
-      "position": { "lat": 37.528508, "lon": -77.828219 },
+      "position": {
+        "lat": 37.528508,
+        "lon": -77.828219
+      },
       "frequency": 113.3,
       "morseId": "..-. .- -.-",
       "magneticVariation": -10.0
@@ -184,7 +828,10 @@
       "name": "Hopewell",
       "type": "navaid",
       "navaidType": "VORDME",
-      "position": { "lat": 37.328869, "lon": -77.115944 },
+      "position": {
+        "lat": 37.328869,
+        "lon": -77.115944
+      },
       "frequency": 114.35,
       "morseId": ".... .--. .--",
       "magneticVariation": -10.0
@@ -194,7 +841,10 @@
       "name": "Richmond ILS 16",
       "type": "navaid",
       "navaidType": "ILS",
-      "position": { "lat": 37.493375, "lon": -77.304947 },
+      "position": {
+        "lat": 37.493375,
+        "lon": -77.304947
+      },
       "frequency": 109.5,
       "morseId": ".. .-. .. -.-.",
       "magneticVariation": -10.0,
@@ -207,7 +857,10 @@
       "name": "Richmond ILS 34",
       "type": "navaid",
       "navaidType": "ILS",
-      "position": { "lat": 37.519067, "lon": -77.325522 },
+      "position": {
+        "lat": 37.519067,
+        "lon": -77.325522
+      },
       "frequency": 111.5,
       "morseId": ".. .-. .. -..",
       "magneticVariation": -10.0,
@@ -220,7 +873,10 @@
       "name": "Richmond ILS 02",
       "type": "navaid",
       "navaidType": "ILS",
-      "position": { "lat": 37.519722, "lon": -77.323392 },
+      "position": {
+        "lat": 37.519722,
+        "lon": -77.323392
+      },
       "frequency": 110.9,
       "morseId": ".. . --.. -..",
       "magneticVariation": -10.0,
@@ -229,11 +885,16 @@
       "glideslopeAngle": 3.0
     }
   ],
-
   "sids": [
     {
       "name": "COLIN8",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
+      "topAltitude": 5000,
       "commonLegs": [],
       "runwayTransitions": [
         {
@@ -242,7 +903,10 @@
             {
               "legType": "VA",
               "course": 23,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -250,7 +914,14 @@
             },
             {
               "legType": "CF",
-              "fix": { "id": "COLIN", "type": "waypoint", "position": { "lat": 38.099786, "lon": -76.664125 } },
+              "fix": {
+                "id": "COLIN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.099786,
+                  "lon": -76.664125
+                }
+              },
               "course": 49
             }
           ]
@@ -261,20 +932,26 @@
             {
               "legType": "VA",
               "course": 157,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
-            },
-            {
-              "legType": "VD",
-              "course": 121,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 4000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
-              "course": 41
+              "course": 61,
+              "turnDirection": "left"
             },
             {
               "legType": "CF",
-              "fix": { "id": "COLIN", "type": "waypoint", "position": { "lat": 38.099786, "lon": -76.664125 } },
+              "fix": {
+                "id": "COLIN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.099786,
+                  "lon": -76.664125
+                }
+              },
               "course": 49
             }
           ]
@@ -285,12 +962,18 @@
             {
               "legType": "VA",
               "course": 203,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VD",
               "course": 121,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 4000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 4000
+              }
             },
             {
               "legType": "VI",
@@ -298,7 +981,14 @@
             },
             {
               "legType": "CF",
-              "fix": { "id": "COLIN", "type": "waypoint", "position": { "lat": 38.099786, "lon": -76.664125 } },
+              "fix": {
+                "id": "COLIN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.099786,
+                  "lon": -76.664125
+                }
+              },
               "course": 49
             }
           ]
@@ -309,7 +999,10 @@
             {
               "legType": "VA",
               "course": 337,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -318,7 +1011,14 @@
             },
             {
               "legType": "CF",
-              "fix": { "id": "COLIN", "type": "waypoint", "position": { "lat": 38.099786, "lon": -76.664125 } },
+              "fix": {
+                "id": "COLIN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.099786,
+                  "lon": -76.664125
+                }
+              },
               "course": 49
             }
           ]
@@ -328,7 +1028,13 @@
     },
     {
       "name": "KALLI7",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
+      "topAltitude": 5000,
       "commonLegs": [],
       "runwayTransitions": [
         {
@@ -337,16 +1043,36 @@
             {
               "legType": "VA",
               "course": 23,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "SUGGR", "type": "waypoint", "position": { "lat": 37.487483, "lon": -77.558081 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "fix": {
+                "id": "SUGGR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.487483,
+                  "lon": -77.558081
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             }
           ]
         },
@@ -356,17 +1082,37 @@
             {
               "legType": "VA",
               "course": 157,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "ITTEM", "type": "waypoint", "position": { "lat": 37.471939, "lon": -77.554572 } },
+              "fix": {
+                "id": "ITTEM",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.471939,
+                  "lon": -77.554572
+                }
+              },
               "turnDirection": "right",
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             }
           ]
         },
@@ -376,16 +1122,36 @@
             {
               "legType": "VA",
               "course": 203,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "ITTEM", "type": "waypoint", "position": { "lat": 37.471939, "lon": -77.554572 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "fix": {
+                "id": "ITTEM",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.471939,
+                  "lon": -77.554572
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             }
           ]
         },
@@ -395,16 +1161,36 @@
             {
               "legType": "VA",
               "course": 337,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "SUGGR", "type": "waypoint", "position": { "lat": 37.487483, "lon": -77.558081 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "fix": {
+                "id": "SUGGR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.487483,
+                  "lon": -77.558081
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             }
           ]
         }
@@ -415,11 +1201,25 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } }
+              "fix": {
+                "id": "READE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.282092,
+                  "lon": -78.328844
+                }
+              }
             }
           ]
         },
@@ -428,15 +1228,36 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "KALLI", "type": "waypoint", "position": { "lat": 37.465139, "lon": -77.647458 } }
+              "fix": {
+                "id": "KALLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.465139,
+                  "lon": -77.647458
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } }
+              "fix": {
+                "id": "READE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.282092,
+                  "lon": -78.328844
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "SANNY", "type": "waypoint", "position": { "lat": 37.000719, "lon": -79.555853 } }
+              "fix": {
+                "id": "SANNY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.000719,
+                  "lon": -79.555853
+                }
+              }
             }
           ]
         }
@@ -444,7 +1265,12 @@
     },
     {
       "name": "LUCYL6",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
       "commonLegs": [],
       "runwayTransitions": [
         {
@@ -453,21 +1279,48 @@
             {
               "legType": "VA",
               "course": 23,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "SJAYY", "type": "waypoint", "position": { "lat": 37.670867, "lon": -77.1483 } },
+              "fix": {
+                "id": "SJAYY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.670867,
+                  "lon": -77.1483
+                }
+              },
               "turnDirection": "right",
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KAMMI", "type": "waypoint", "position": { "lat": 37.907931, "lon": -76.908839 } }
+              "fix": {
+                "id": "KAMMI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.907931,
+                  "lon": -76.908839
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "LUCYL", "type": "waypoint", "position": { "lat": 38.089972, "lon": -76.677522 } }
+              "fix": {
+                "id": "LUCYL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.089972,
+                  "lon": -76.677522
+                }
+              }
             }
           ]
         },
@@ -477,26 +1330,63 @@
             {
               "legType": "VA",
               "course": 157,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "KEGME", "type": "waypoint", "position": { "lat": 37.477772, "lon": -77.150419 } },
+              "fix": {
+                "id": "KEGME",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.477772,
+                  "lon": -77.150419
+                }
+              },
               "turnDirection": "left",
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 4000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 4000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "BUNKK", "type": "waypoint", "position": { "lat": 37.526036, "lon": -77.064994 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "fix": {
+                "id": "BUNKK",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.526036,
+                  "lon": -77.064994
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HAYYU", "type": "waypoint", "position": { "lat": 37.729553, "lon": -76.702344 } }
+              "fix": {
+                "id": "HAYYU",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.729553,
+                  "lon": -76.702344
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "LUCYL", "type": "waypoint", "position": { "lat": 38.089972, "lon": -76.677522 } }
+              "fix": {
+                "id": "LUCYL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.089972,
+                  "lon": -76.677522
+                }
+              }
             }
           ]
         },
@@ -506,26 +1396,63 @@
             {
               "legType": "VA",
               "course": 203,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "KEGME", "type": "waypoint", "position": { "lat": 37.477772, "lon": -77.150419 } },
+              "fix": {
+                "id": "KEGME",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.477772,
+                  "lon": -77.150419
+                }
+              },
               "turnDirection": "left",
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 4000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 4000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "BUNKK", "type": "waypoint", "position": { "lat": 37.526036, "lon": -77.064994 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "fix": {
+                "id": "BUNKK",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.526036,
+                  "lon": -77.064994
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HAYYU", "type": "waypoint", "position": { "lat": 37.729553, "lon": -76.702344 } }
+              "fix": {
+                "id": "HAYYU",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.729553,
+                  "lon": -76.702344
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "LUCYL", "type": "waypoint", "position": { "lat": 38.089972, "lon": -76.677522 } }
+              "fix": {
+                "id": "LUCYL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.089972,
+                  "lon": -76.677522
+                }
+              }
             }
           ]
         },
@@ -535,21 +1462,48 @@
             {
               "legType": "VA",
               "course": 337,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "DF",
-              "fix": { "id": "SJAYY", "type": "waypoint", "position": { "lat": 37.670867, "lon": -77.1483 } },
+              "fix": {
+                "id": "SJAYY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.670867,
+                  "lon": -77.1483
+                }
+              },
               "turnDirection": "right",
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 5000 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 5000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "KAMMI", "type": "waypoint", "position": { "lat": 37.907931, "lon": -76.908839 } }
+              "fix": {
+                "id": "KAMMI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.907931,
+                  "lon": -76.908839
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "LUCYL", "type": "waypoint", "position": { "lat": 38.089972, "lon": -76.677522 } }
+              "fix": {
+                "id": "LUCYL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 38.089972,
+                  "lon": -76.677522
+                }
+              }
             }
           ]
         }
@@ -558,11 +1512,23 @@
     },
     {
       "name": "READE7",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
       "commonLegs": [
         {
           "legType": "TF",
-          "fix": { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } }
+          "fix": {
+            "id": "READE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.282092,
+              "lon": -78.328844
+            }
+          }
         }
       ],
       "runwayTransitions": [
@@ -572,7 +1538,10 @@
             {
               "legType": "VA",
               "course": 23,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -587,7 +1556,10 @@
             {
               "legType": "VA",
               "course": 157,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -602,7 +1574,10 @@
             {
               "legType": "VA",
               "course": 203,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -617,7 +1592,10 @@
             {
               "legType": "VA",
               "course": 337,
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 687 }
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 687
+              }
             },
             {
               "legType": "VI",
@@ -633,7 +1611,14 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } }
+              "fix": {
+                "id": "READE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.282092,
+                  "lon": -78.328844
+                }
+              }
             }
           ]
         },
@@ -642,31 +1627,66 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "READE", "type": "waypoint", "position": { "lat": 37.282092, "lon": -78.328844 } }
+              "fix": {
+                "id": "READE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.282092,
+                  "lon": -78.328844
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "SANNY", "type": "waypoint", "position": { "lat": 37.000719, "lon": -79.555853 } }
+              "fix": {
+                "id": "SANNY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.000719,
+                  "lon": -79.555853
+                }
+              }
             }
           ]
         }
       ]
     }
   ],
-
   "stars": [
     {
       "name": "DUCXS5",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
       "commonLegs": [
         {
           "legType": "IF",
-          "fix": { "id": "THINA", "type": "waypoint", "position": { "lat": 37.327097, "lon": -77.650317 } }
+          "fix": {
+            "id": "THINA",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.327097,
+              "lon": -77.650317
+            }
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } },
-          "altitudeConstraint": { "type": "at", "altitude": 4000 }
+          "fix": {
+            "id": "DUCXS",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.463111,
+              "lon": -77.654444
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 4000
+          }
         }
       ],
       "enrouteTransitions": [
@@ -675,13 +1695,34 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "KELCE", "type": "waypoint", "position": { "lat": 37.185106, "lon": -77.916314 } },
-              "altitudeConstraint": { "type": "between", "min": 11000, "max": 18000 },
-              "speedConstraint": { "type": "atOrBelow", "speed": 250 }
+              "fix": {
+                "id": "KELCE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.185106,
+                  "lon": -77.916314
+                }
+              },
+              "altitudeConstraint": {
+                "type": "between",
+                "min": 11000,
+                "max": 18000
+              },
+              "speedConstraint": {
+                "type": "atOrBelow",
+                "speed": 250
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "THINA", "type": "waypoint", "position": { "lat": 37.327097, "lon": -77.650317 } }
+              "fix": {
+                "id": "THINA",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.327097,
+                  "lon": -77.650317
+                }
+              }
             }
           ]
         },
@@ -690,17 +1731,45 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "NEAVL", "type": "waypoint", "position": { "lat": 36.978861, "lon": -77.758283 } },
-              "altitudeConstraint": { "type": "between", "min": 11000, "max": 18000 },
-              "speedConstraint": { "type": "atOrBelow", "speed": 250 }
+              "fix": {
+                "id": "NEAVL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 36.978861,
+                  "lon": -77.758283
+                }
+              },
+              "altitudeConstraint": {
+                "type": "between",
+                "min": 11000,
+                "max": 18000
+              },
+              "speedConstraint": {
+                "type": "atOrBelow",
+                "speed": 250
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "PULDY", "type": "waypoint", "position": { "lat": 37.131042, "lon": -77.644394 } }
+              "fix": {
+                "id": "PULDY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.131042,
+                  "lon": -77.644394
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "THINA", "type": "waypoint", "position": { "lat": 37.327097, "lon": -77.650317 } }
+              "fix": {
+                "id": "THINA",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.327097,
+                  "lon": -77.650317
+                }
+              }
             }
           ]
         }
@@ -709,7 +1778,12 @@
     },
     {
       "name": "POWTN5",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
       "commonLegs": [],
       "enrouteTransitions": [
         {
@@ -717,35 +1791,96 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "LYH", "type": "navaid", "position": { "lat": 37.254578, "lon": -79.236381 } }
+              "fix": {
+                "id": "LYH",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.254578,
+                  "lon": -79.236381
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "WLOCK", "type": "waypoint", "position": { "lat": 37.307356, "lon": -78.970442 } }
+              "fix": {
+                "id": "WLOCK",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.307356,
+                  "lon": -78.970442
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "GRUTO", "type": "waypoint", "position": { "lat": 37.345661, "lon": -78.777483 } }
+              "fix": {
+                "id": "GRUTO",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.345661,
+                  "lon": -78.777483
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HONTA", "type": "waypoint", "position": { "lat": 37.419728, "lon": -78.398192 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 13000 }
+              "fix": {
+                "id": "HONTA",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.419728,
+                  "lon": -78.398192
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 13000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "VETEC", "type": "waypoint", "position": { "lat": 37.450394, "lon": -78.239533 } },
-              "altitudeConstraint": { "type": "atOrBelow", "altitude": 12000 }
+              "fix": {
+                "id": "VETEC",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.450394,
+                  "lon": -78.239533
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrBelow",
+                "altitude": 12000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "AHONE", "type": "waypoint", "position": { "lat": 37.484028, "lon": -78.071781 } },
-              "altitudeConstraint": { "type": "at", "altitude": 11000 },
-              "speedConstraint": { "type": "atOrBelow", "speed": 280 }
+              "fix": {
+                "id": "AHONE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.484028,
+                  "lon": -78.071781
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 11000
+              },
+              "speedConstraint": {
+                "type": "atOrBelow",
+                "speed": 280
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } }
+              "fix": {
+                "id": "POWTN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.508292,
+                  "lon": -77.9491
+                }
+              }
             }
           ]
         }
@@ -756,11 +1891,25 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } }
+              "fix": {
+                "id": "POWTN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.508292,
+                  "lon": -77.9491
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } }
+              "fix": {
+                "id": "DUCXS",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.463111,
+                  "lon": -77.654444
+                }
+              }
             }
           ]
         },
@@ -769,11 +1918,25 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } }
+              "fix": {
+                "id": "POWTN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.508292,
+                  "lon": -77.9491
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DEEER", "type": "waypoint", "position": { "lat": 37.632028, "lon": -77.665628 } }
+              "fix": {
+                "id": "DEEER",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.632028,
+                  "lon": -77.665628
+                }
+              }
             }
           ]
         },
@@ -782,11 +1945,25 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } }
+              "fix": {
+                "id": "POWTN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.508292,
+                  "lon": -77.9491
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DEEER", "type": "waypoint", "position": { "lat": 37.632028, "lon": -77.665628 } }
+              "fix": {
+                "id": "DEEER",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.632028,
+                  "lon": -77.665628
+                }
+              }
             }
           ]
         },
@@ -795,11 +1972,25 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "POWTN", "type": "waypoint", "position": { "lat": 37.508292, "lon": -77.9491 } }
+              "fix": {
+                "id": "POWTN",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.508292,
+                  "lon": -77.9491
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } }
+              "fix": {
+                "id": "DUCXS",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.463111,
+                  "lon": -77.654444
+                }
+              }
             }
           ]
         }
@@ -807,7 +1998,12 @@
     },
     {
       "name": "SPIDR5",
-      "runways": ["02", "16", "20", "34"],
+      "runways": [
+        "02",
+        "16",
+        "20",
+        "34"
+      ],
       "commonLegs": [],
       "enrouteTransitions": [
         {
@@ -815,31 +2011,86 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "MOL", "type": "navaid", "position": { "lat": 37.900525, "lon": -79.106889 } }
+              "fix": {
+                "id": "MOL",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.900525,
+                  "lon": -79.106889
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "ZUMAT", "type": "waypoint", "position": { "lat": 37.828747, "lon": -78.775192 } }
+              "fix": {
+                "id": "ZUMAT",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.828747,
+                  "lon": -78.775192
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DXOON", "type": "waypoint", "position": { "lat": 37.770786, "lon": -78.500864 } }
+              "fix": {
+                "id": "DXOON",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.770786,
+                  "lon": -78.500864
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "REDNG", "type": "waypoint", "position": { "lat": 37.712961, "lon": -78.230544 } },
-              "altitudeConstraint": { "type": "at", "altitude": 13000 },
-              "speedConstraint": { "type": "atOrBelow", "speed": 280 }
+              "fix": {
+                "id": "REDNG",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.712961,
+                  "lon": -78.230544
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 13000
+              },
+              "speedConstraint": {
+                "type": "atOrBelow",
+                "speed": 280
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HEMME", "type": "waypoint", "position": { "lat": 37.687528, "lon": -78.106639 } },
-              "altitudeConstraint": { "type": "between", "min": 11000, "max": 12000 }
+              "fix": {
+                "id": "HEMME",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.687528,
+                  "lon": -78.106639
+                }
+              },
+              "altitudeConstraint": {
+                "type": "between",
+                "min": 11000,
+                "max": 12000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-              "altitudeConstraint": { "type": "at", "altitude": 8000 }
+              "fix": {
+                "id": "SPIDR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.645478,
+                  "lon": -77.852833
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 8000
+              }
             }
           ]
         }
@@ -850,13 +2101,33 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-              "altitudeConstraint": { "type": "at", "altitude": 8000 }
+              "fix": {
+                "id": "SPIDR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.645478,
+                  "lon": -77.852833
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 8000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } },
-              "altitudeConstraint": { "type": "at", "altitude": 4000 }
+              "fix": {
+                "id": "DUCXS",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.463111,
+                  "lon": -77.654444
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 4000
+              }
             }
           ]
         },
@@ -865,12 +2136,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-              "altitudeConstraint": { "type": "at", "altitude": 8000 }
+              "fix": {
+                "id": "SPIDR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.645478,
+                  "lon": -77.852833
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 8000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "RUPRT", "type": "waypoint", "position": { "lat": 37.638789, "lon": -77.759203 } }
+              "fix": {
+                "id": "RUPRT",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.638789,
+                  "lon": -77.759203
+                }
+              }
             }
           ]
         },
@@ -879,12 +2167,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-              "altitudeConstraint": { "type": "at", "altitude": 8000 }
+              "fix": {
+                "id": "SPIDR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.645478,
+                  "lon": -77.852833
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 8000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "RUPRT", "type": "waypoint", "position": { "lat": 37.638789, "lon": -77.759203 } }
+              "fix": {
+                "id": "RUPRT",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.638789,
+                  "lon": -77.759203
+                }
+              }
             }
           ]
         },
@@ -893,20 +2198,39 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "SPIDR", "type": "waypoint", "position": { "lat": 37.645478, "lon": -77.852833 } },
-              "altitudeConstraint": { "type": "at", "altitude": 8000 }
+              "fix": {
+                "id": "SPIDR",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.645478,
+                  "lon": -77.852833
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 8000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "DUCXS", "type": "waypoint", "position": { "lat": 37.463111, "lon": -77.654444 } },
-              "altitudeConstraint": { "type": "at", "altitude": 4000 }
+              "fix": {
+                "id": "DUCXS",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.463111,
+                  "lon": -77.654444
+                }
+              },
+              "altitudeConstraint": {
+                "type": "at",
+                "altitude": 4000
+              }
             }
           ]
         }
       ]
     }
   ],
-
   "approaches": [
     {
       "name": "ILS OR LOC RWY 16",
@@ -915,19 +2239,46 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "CFDTG", "type": "waypoint", "position": { "lat": 37.645444, "lon": -77.426972 } },
-          "altitudeConstraint": { "type": "at", "altitude": 2800 }
+          "fix": {
+            "id": "CFDTG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.645444,
+              "lon": -77.426972
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 2800
+          }
         },
         {
           "legType": "CF",
-          "fix": { "id": "FIBUG", "type": "waypoint", "position": { "lat": 37.617258, "lon": -77.404311 } },
+          "fix": {
+            "id": "FIBUG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.617258,
+              "lon": -77.404311
+            }
+          },
           "course": 157,
-          "altitudeConstraint": { "type": "at", "altitude": 2500 }
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 2500
+          }
         },
         {
           "legType": "CF",
           "course": 157,
-          "fix": { "id": "RW16", "type": "runway", "position": { "lat": 37.516636, "lon": -77.323578 } }
+          "fix": {
+            "id": "RW16",
+            "type": "runway",
+            "position": {
+              "lat": 37.516636,
+              "lon": -77.323578
+            }
+          }
         }
       ],
       "transitions": [
@@ -936,12 +2287,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "FAK", "type": "navaid", "position": { "lat": 37.528508, "lon": -77.828219 } }
+              "fix": {
+                "id": "FAK",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.528508,
+                  "lon": -77.828219
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "FIBUG", "type": "waypoint", "position": { "lat": 37.617258, "lon": -77.404311 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2800 }
+              "fix": {
+                "id": "FIBUG",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.617258,
+                  "lon": -77.404311
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2800
+              }
             }
           ]
         },
@@ -950,12 +2318,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "RIC", "type": "navaid", "position": { "lat": 37.502347, "lon": -77.320275 } }
+              "fix": {
+                "id": "RIC",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.502347,
+                  "lon": -77.320275
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "FIBUG", "type": "waypoint", "position": { "lat": 37.617258, "lon": -77.404311 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2800 }
+              "fix": {
+                "id": "FIBUG",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.617258,
+                  "lon": -77.404311
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2800
+              }
             }
           ]
         }
@@ -963,15 +2348,35 @@
       "missedApproachLegs": [
         {
           "legType": "DF",
-          "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "HPW",
+            "type": "navaid",
+            "position": {
+              "lat": 37.328869,
+              "lon": -77.115944
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } },
+          "fix": {
+            "id": "HPW",
+            "type": "navaid",
+            "position": {
+              "lat": 37.328869,
+              "lon": -77.115944
+            }
+          },
           "course": 205,
           "turnDirection": "left",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         }
       ],
       "minimums": 509
@@ -983,19 +2388,46 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-          "altitudeConstraint": { "type": "at", "altitude": 2000 }
+          "fix": {
+            "id": "CASEE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.301033,
+              "lon": -77.388928
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 2000
+          }
         },
         {
           "legType": "CF",
-          "fix": { "id": "JESTY", "type": "waypoint", "position": { "lat": 37.407567, "lon": -77.357053 } },
+          "fix": {
+            "id": "JESTY",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.407567,
+              "lon": -77.357053
+            }
+          },
           "course": 23,
-          "altitudeConstraint": { "type": "at", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 2000
+          }
         },
         {
           "legType": "CF",
           "course": 23,
-          "fix": { "id": "RW02", "type": "runway", "position": { "lat": 37.498872, "lon": -77.329658 } }
+          "fix": {
+            "id": "RW02",
+            "type": "runway",
+            "position": {
+              "lat": 37.498872,
+              "lon": -77.329658
+            }
+          }
         }
       ],
       "transitions": [
@@ -1004,12 +2436,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } }
+              "fix": {
+                "id": "HPW",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.328869,
+                  "lon": -77.115944
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "CASEE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.301033,
+                  "lon": -77.388928
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             }
           ]
         }
@@ -1017,16 +2466,36 @@
       "missedApproachLegs": [
         {
           "legType": "CF",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
           "course": 18,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
           "course": 18,
           "turnDirection": "right",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         }
       ],
       "minimums": 483
@@ -1038,19 +2507,46 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "JUVPO", "type": "waypoint", "position": { "lat": 37.304369, "lon": -77.154122 } },
-          "altitudeConstraint": { "type": "at", "altitude": 1700 }
+          "fix": {
+            "id": "JUVPO",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.304369,
+              "lon": -77.154122
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 1700
+          }
         },
         {
           "legType": "CF",
-          "fix": { "id": "JOMUS", "type": "waypoint", "position": { "lat": 37.430178, "lon": -77.254417 } },
+          "fix": {
+            "id": "JOMUS",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.430178,
+              "lon": -77.254417
+            }
+          },
           "course": 337,
-          "altitudeConstraint": { "type": "at", "altitude": 1700 }
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 1700
+          }
         },
         {
           "legType": "CF",
           "course": 337,
-          "fix": { "id": "RW34", "type": "runway", "position": { "lat": 37.495792, "lon": -77.306883 } }
+          "fix": {
+            "id": "RW34",
+            "type": "runway",
+            "position": {
+              "lat": 37.495792,
+              "lon": -77.306883
+            }
+          }
         }
       ],
       "transitions": [],
@@ -1058,20 +2554,43 @@
         {
           "legType": "CA",
           "course": 337,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 800 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 800
+          }
         },
         {
           "legType": "CF",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
           "course": 18,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
           "course": 18,
           "turnDirection": "right",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         }
       ],
       "minimums": 489
@@ -1083,22 +2602,59 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+          "fix": {
+            "id": "IFPIG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.701803,
+              "lon": -77.472347
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 3000
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "FIBUG", "type": "waypoint", "position": { "lat": 37.617258, "lon": -77.404311 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "fix": {
+            "id": "FIBUG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.617258,
+              "lon": -77.404311
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "GORDD", "type": "waypoint", "position": { "lat": 37.547581, "lon": -77.348378 } },
-          "altitudeConstraint": { "type": "at", "altitude": 922 }
+          "fix": {
+            "id": "GORDD",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.547581,
+              "lon": -77.348378
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 922
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "RW16", "type": "runway", "position": { "lat": 37.516636, "lon": -77.323578 } }
+          "fix": {
+            "id": "RW16",
+            "type": "runway",
+            "position": {
+              "lat": 37.516636,
+              "lon": -77.323578
+            }
+          }
         }
       ],
       "transitions": [
@@ -1107,13 +2663,33 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "HIBOM", "type": "waypoint", "position": { "lat": 37.7813, "lon": -77.395717 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+              "fix": {
+                "id": "HIBOM",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.7813,
+                  "lon": -77.395717
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 3000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+              "fix": {
+                "id": "IFPIG",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.701803,
+                  "lon": -77.472347
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 3000
+              }
             }
           ]
         },
@@ -1122,17 +2698,44 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "FAK", "type": "navaid", "position": { "lat": 37.528508, "lon": -77.828219 } }
+              "fix": {
+                "id": "FAK",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.528508,
+                  "lon": -77.828219
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "WAKAL", "type": "waypoint", "position": { "lat": 37.683517, "lon": -77.574786 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+              "fix": {
+                "id": "WAKAL",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.683517,
+                  "lon": -77.574786
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 3000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+              "fix": {
+                "id": "IFPIG",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.701803,
+                  "lon": -77.472347
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 3000
+              }
             }
           ]
         }
@@ -1141,19 +2744,42 @@
         {
           "legType": "CA",
           "course": 157,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 367 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 367
+          }
         },
         {
           "legType": "DF",
-          "fix": { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "fix": {
+            "id": "HAGLI",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.345619,
+              "lon": -77.186961
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
+          "fix": {
+            "id": "HAGLI",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.345619,
+              "lon": -77.186961
+            }
+          },
           "course": 337,
           "turnDirection": "right",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         }
       ],
       "minimums": 509
@@ -1165,22 +2791,59 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "fix": {
+            "id": "HAGLI",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.345619,
+              "lon": -77.186961
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "JOMUS", "type": "waypoint", "position": { "lat": 37.430178, "lon": -77.254417 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 1700 }
+          "fix": {
+            "id": "JOMUS",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.430178,
+              "lon": -77.254417
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 1700
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "YUTUP", "type": "waypoint", "position": { "lat": 37.476097, "lon": -77.291122 } },
-          "altitudeConstraint": { "type": "at", "altitude": 661 }
+          "fix": {
+            "id": "YUTUP",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.476097,
+              "lon": -77.291122
+            }
+          },
+          "altitudeConstraint": {
+            "type": "at",
+            "altitude": 661
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "RW34", "type": "runway", "position": { "lat": 37.495792, "lon": -77.306883 } }
+          "fix": {
+            "id": "RW34",
+            "type": "runway",
+            "position": {
+              "lat": 37.495792,
+              "lon": -77.306883
+            }
+          }
         }
       ],
       "transitions": [
@@ -1189,17 +2852,44 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "FAK", "type": "navaid", "position": { "lat": 37.528508, "lon": -77.828219 } }
+              "fix": {
+                "id": "FAK",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.528508,
+                  "lon": -77.828219
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "IGANE", "type": "waypoint", "position": { "lat": 37.239722, "lon": -77.288703 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 3000 }
+              "fix": {
+                "id": "IGANE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.239722,
+                  "lon": -77.288703
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 3000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+              "fix": {
+                "id": "HAGLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.345619,
+                  "lon": -77.186961
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2500
+              }
             }
           ]
         },
@@ -1208,12 +2898,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } }
+              "fix": {
+                "id": "HPW",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.328869,
+                  "lon": -77.115944
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "HAGLI", "type": "waypoint", "position": { "lat": 37.345619, "lon": -77.186961 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+              "fix": {
+                "id": "HAGLI",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.345619,
+                  "lon": -77.186961
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2500
+              }
             }
           ]
         }
@@ -1222,19 +2929,42 @@
         {
           "legType": "CA",
           "course": 337,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 361 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 361
+          }
         },
         {
           "legType": "DF",
-          "fix": { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "fix": {
+            "id": "IFPIG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.701803,
+              "lon": -77.472347
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "IFPIG", "type": "waypoint", "position": { "lat": 37.701803, "lon": -77.472347 } },
+          "fix": {
+            "id": "IFPIG",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.701803,
+              "lon": -77.472347
+            }
+          },
           "course": 157,
           "turnDirection": "left",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2500 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2500
+          }
         }
       ],
       "minimums": 489
@@ -1246,17 +2976,44 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "CASEE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.301033,
+              "lon": -77.388928
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "JESTY", "type": "waypoint", "position": { "lat": 37.407567, "lon": -77.357053 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "JESTY",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.407567,
+              "lon": -77.357053
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "RW02", "type": "runway", "position": { "lat": 37.498872, "lon": -77.329658 } }
+          "fix": {
+            "id": "RW02",
+            "type": "runway",
+            "position": {
+              "lat": 37.498872,
+              "lon": -77.329658
+            }
+          }
         }
       ],
       "transitions": [
@@ -1265,12 +3022,29 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "FAK", "type": "navaid", "position": { "lat": 37.528508, "lon": -77.828219 } }
+              "fix": {
+                "id": "FAK",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.528508,
+                  "lon": -77.828219
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "CASEE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.301033,
+                  "lon": -77.388928
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             }
           ]
         },
@@ -1279,17 +3053,44 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } }
+              "fix": {
+                "id": "HPW",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.328869,
+                  "lon": -77.115944
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "FEMAP", "type": "waypoint", "position": { "lat": 37.244, "lon": -77.280911 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "FEMAP",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.244,
+                  "lon": -77.280911
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "CASEE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.301033,
+                  "lon": -77.388928
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             }
           ]
         }
@@ -1298,19 +3099,42 @@
         {
           "legType": "CA",
           "course": 23,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 457 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 457
+          }
         },
         {
           "legType": "DF",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
           "course": 203,
           "turnDirection": "left",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         }
       ],
       "minimums": 483
@@ -1322,17 +3146,44 @@
       "legs": [
         {
           "legType": "IF",
-          "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "IMASE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.686894,
+              "lon": -77.273
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "FOBON", "type": "waypoint", "position": { "lat": 37.607517, "lon": -77.296958 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "FOBON",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.607517,
+              "lon": -77.296958
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "TF",
-          "fix": { "id": "RW20", "type": "runway", "position": { "lat": 37.516519, "lon": -77.324356 } }
+          "fix": {
+            "id": "RW20",
+            "type": "runway",
+            "position": {
+              "lat": 37.516519,
+              "lon": -77.324356
+            }
+          }
         }
       ],
       "transitions": [
@@ -1341,17 +3192,44 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "FAK", "type": "navaid", "position": { "lat": 37.528508, "lon": -77.828219 } }
+              "fix": {
+                "id": "FAK",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.528508,
+                  "lon": -77.828219
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "TRUIT", "type": "waypoint", "position": { "lat": 37.723083, "lon": -77.456447 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "TRUIT",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.723083,
+                  "lon": -77.456447
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "IMASE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.686894,
+                  "lon": -77.273
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             }
           ]
         },
@@ -1360,17 +3238,44 @@
           "legs": [
             {
               "legType": "IF",
-              "fix": { "id": "HPW", "type": "navaid", "position": { "lat": 37.328869, "lon": -77.115944 } }
+              "fix": {
+                "id": "HPW",
+                "type": "navaid",
+                "position": {
+                  "lat": 37.328869,
+                  "lon": -77.115944
+                }
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "BAYLY", "type": "waypoint", "position": { "lat": 37.658094, "lon": -77.087575 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "BAYLY",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.658094,
+                  "lon": -77.087575
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             },
             {
               "legType": "TF",
-              "fix": { "id": "IMASE", "type": "waypoint", "position": { "lat": 37.686894, "lon": -77.273 } },
-              "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+              "fix": {
+                "id": "IMASE",
+                "type": "waypoint",
+                "position": {
+                  "lat": 37.686894,
+                  "lon": -77.273
+                }
+              },
+              "altitudeConstraint": {
+                "type": "atOrAbove",
+                "altitude": 2000
+              }
             }
           ]
         }
@@ -1379,25 +3284,47 @@
         {
           "legType": "CA",
           "course": 203,
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 464 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 464
+          }
         },
         {
           "legType": "DF",
-          "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "fix": {
+            "id": "CASEE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.301033,
+              "lon": -77.388928
+            }
+          },
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         },
         {
           "legType": "HM",
-          "fix": { "id": "CASEE", "type": "waypoint", "position": { "lat": 37.301033, "lon": -77.388928 } },
+          "fix": {
+            "id": "CASEE",
+            "type": "waypoint",
+            "position": {
+              "lat": 37.301033,
+              "lon": -77.388928
+            }
+          },
           "course": 23,
           "turnDirection": "right",
-          "altitudeConstraint": { "type": "atOrAbove", "altitude": 2000 }
+          "altitudeConstraint": {
+            "type": "atOrAbove",
+            "altitude": 2000
+          }
         }
       ],
       "minimums": 504
     }
   ],
-
   "airspace": [
     {
       "name": "KRIC Class C Inner",
@@ -1405,18 +3332,54 @@
       "floor": 0,
       "ceiling": 4200,
       "boundary": [
-        { "lat": 37.505181, "lon": -77.2417 },
-        { "lat": 37.548, "lon": -77.2494 },
-        { "lat": 37.578, "lon": -77.2789 },
-        { "lat": 37.586, "lon": -77.3197 },
-        { "lat": 37.578, "lon": -77.3605 },
-        { "lat": 37.548, "lon": -77.3900 },
-        { "lat": 37.505181, "lon": -77.3977 },
-        { "lat": 37.462, "lon": -77.3900 },
-        { "lat": 37.432, "lon": -77.3605 },
-        { "lat": 37.424, "lon": -77.3197 },
-        { "lat": 37.432, "lon": -77.2789 },
-        { "lat": 37.462, "lon": -77.2494 }
+        {
+          "lat": 37.505181,
+          "lon": -77.2417
+        },
+        {
+          "lat": 37.548,
+          "lon": -77.2494
+        },
+        {
+          "lat": 37.578,
+          "lon": -77.2789
+        },
+        {
+          "lat": 37.586,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.578,
+          "lon": -77.3605
+        },
+        {
+          "lat": 37.548,
+          "lon": -77.39
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.3977
+        },
+        {
+          "lat": 37.462,
+          "lon": -77.39
+        },
+        {
+          "lat": 37.432,
+          "lon": -77.3605
+        },
+        {
+          "lat": 37.424,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.432,
+          "lon": -77.2789
+        },
+        {
+          "lat": 37.462,
+          "lon": -77.2494
+        }
       ]
     },
     {
@@ -1425,20 +3388,62 @@
       "floor": 1300,
       "ceiling": 4200,
       "boundary": [
-        { "lat": 37.505181, "lon": -77.1637 },
-        { "lat": 37.592, "lon": -77.1791 },
-        { "lat": 37.652, "lon": -77.2372 },
-        { "lat": 37.667, "lon": -77.3197 },
-        { "lat": 37.652, "lon": -77.4022 },
-        { "lat": 37.592, "lon": -77.4603 },
-        { "lat": 37.505181, "lon": -77.4757 },
-        { "lat": 37.505181, "lon": -77.3977 },
-        { "lat": 37.548, "lon": -77.3900 },
-        { "lat": 37.578, "lon": -77.3605 },
-        { "lat": 37.586, "lon": -77.3197 },
-        { "lat": 37.578, "lon": -77.2789 },
-        { "lat": 37.548, "lon": -77.2494 },
-        { "lat": 37.505181, "lon": -77.2417 }
+        {
+          "lat": 37.505181,
+          "lon": -77.1637
+        },
+        {
+          "lat": 37.592,
+          "lon": -77.1791
+        },
+        {
+          "lat": 37.652,
+          "lon": -77.2372
+        },
+        {
+          "lat": 37.667,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.652,
+          "lon": -77.4022
+        },
+        {
+          "lat": 37.592,
+          "lon": -77.4603
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.4757
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.3977
+        },
+        {
+          "lat": 37.548,
+          "lon": -77.39
+        },
+        {
+          "lat": 37.578,
+          "lon": -77.3605
+        },
+        {
+          "lat": 37.586,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.578,
+          "lon": -77.2789
+        },
+        {
+          "lat": 37.548,
+          "lon": -77.2494
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.2417
+        }
       ]
     },
     {
@@ -1447,21 +3452,69 @@
       "floor": 1300,
       "ceiling": 4200,
       "boundary": [
-        { "lat": 37.505181, "lon": -77.2417 },
-        { "lat": 37.462, "lon": -77.2494 },
-        { "lat": 37.432, "lon": -77.2789 },
-        { "lat": 37.424, "lon": -77.3197 },
-        { "lat": 37.432, "lon": -77.3605 },
-        { "lat": 37.462, "lon": -77.3900 },
-        { "lat": 37.505181, "lon": -77.3977 },
-        { "lat": 37.505181, "lon": -77.4757 },
-        { "lat": 37.418, "lon": -77.4603 },
-        { "lat": 37.359, "lon": -77.4022 },
-        { "lat": 37.343, "lon": -77.3197 },
-        { "lat": 37.359, "lon": -77.2372 },
-        { "lat": 37.418, "lon": -77.1791 },
-        { "lat": 37.505181, "lon": -77.1637 }
+        {
+          "lat": 37.505181,
+          "lon": -77.2417
+        },
+        {
+          "lat": 37.462,
+          "lon": -77.2494
+        },
+        {
+          "lat": 37.432,
+          "lon": -77.2789
+        },
+        {
+          "lat": 37.424,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.432,
+          "lon": -77.3605
+        },
+        {
+          "lat": 37.462,
+          "lon": -77.39
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.3977
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.4757
+        },
+        {
+          "lat": 37.418,
+          "lon": -77.4603
+        },
+        {
+          "lat": 37.359,
+          "lon": -77.4022
+        },
+        {
+          "lat": 37.343,
+          "lon": -77.3197
+        },
+        {
+          "lat": 37.359,
+          "lon": -77.2372
+        },
+        {
+          "lat": 37.418,
+          "lon": -77.1791
+        },
+        {
+          "lat": 37.505181,
+          "lon": -77.1637
+        }
       ]
     }
-  ]
+  ],
+  "tracon": {
+    "name": "Potomac TRACON \u2014 James River Sector",
+    "ceiling": 17000,
+    "floor": 0,
+    "lateralRadiusNm": 40
+  }
 }

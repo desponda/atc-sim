@@ -119,6 +119,8 @@ export interface Clearances {
   maintainUntilEstablished: number | null;
   /** Handoff frequency */
   handoffFrequency: number | null;
+  /** Handoff facility name (tower, center, approach, etc.) */
+  handoffFacility: string | null;
 }
 
 /** Aircraft flight plan */
@@ -192,6 +194,25 @@ export interface AircraftState {
   /** Is this aircraft being handed off */
   handingOff: boolean;
 
+  /** Radar handoff state: offered to next facility, accepted, or rejected */
+  radarHandoffState?: 'offered' | 'accepted' | 'rejected';
+  /** Sim time (ms) when the radar handoff was offered (used for acceptance timer) */
+  radarHandoffOfferedAt?: number;
+
+  /**
+   * Inbound handoff state from Center to our sector.
+   * 'offered'  = center has pre-offered this arrival; controller must accept before aircraft checks in.
+   * 'accepted' = controller accepted; aircraft will check in after checkInDelayTicks reaches 0.
+   * undefined  = aircraft is fully with us (normal).
+   */
+  inboundHandoff?: 'offered' | 'accepted';
+  /** Wall-clock time (ms) when the inbound handoff was offered (for penalty timing) */
+  inboundHandoffOfferedAt?: number;
+  /** Wall-clock time (ms) when the controller accepted the inbound handoff */
+  handoffAcceptedAt?: number;
+  /** Countdown ticks before the aircraft checks in after handoff acceptance (3–5 ticks) */
+  checkInDelayTicks?: number;
+
   /** Arrival or departure from controller perspective */
   category: 'arrival' | 'departure' | 'overflight' | 'vfr';
 
@@ -208,4 +229,41 @@ export interface AircraftState {
 
   /** Controller scratch pad notes (free-text, client-editable) */
   scratchPad?: string;
+
+  /** Runway ID being occupied (set at touchdown, cleared at exit) */
+  runwayOccupying?: string;
+  /** Distance traveled along runway from touchdown point (nm) */
+  rolloutDistanceNm?: number;
+
+  /** Holding pattern state (set when actively holding) */
+  holdingState?: {
+    /** Current phase of the hold */
+    phase: 'inbound' | 'turning_outbound' | 'outbound' | 'turning_inbound';
+    /** Inbound course to the fix (degrees) */
+    inboundCourse: number;
+    /** Timestamp (simTime ms) when current leg started */
+    legStartTime: number;
+    /** Position of the hold fix */
+    fixPosition: Position;
+  };
+
+  /**
+   * Visual sight state machine.
+   * Controller uses rfs/rts to query; pilot responds after responseDelay ticks.
+   * Must be 'fieldSighted' or 'trafficSighted' before cv<rwy> is allowed.
+   */
+  visualSight?: {
+    state: 'queried' | 'fieldSighted' | 'trafficSighted' | 'negative' | 'willReport';
+    queriedAtTick: number;
+    responseDelay: number;
+    trafficCallsign?: string;
+  };
+
+  /** Callsign of lead traffic being followed for visual separation */
+  visualFollowTrafficCallsign?: string;
+
+  /** SID departure leg sequence for initial heading guidance (VA/VI/VD legs only) */
+  sidLegs?: Array<{ legType: 'VA' | 'VI' | 'VD'; course: number; altConstraint?: number; turnDirection?: 'left' | 'right' }>;
+  /** Index of currently executing SID departure leg */
+  sidLegIdx?: number;
 }

@@ -15,6 +15,15 @@ import type {
 /** Highlight color for a flight strip */
 export type StripHighlight = 'none' | 'yellow' | 'red';
 
+/** A single entry in the controller event log */
+export interface EventLogEntry {
+  id: string;
+  timestamp: number;
+  type: 'conflict' | 'msaw' | 'runway' | 'wake' | 'score' | 'handoff' | 'info';
+  message: string;
+  severity: 'warning' | 'caution' | 'info';
+}
+
 /** Per-aircraft strip state stored client-side */
 export interface StripState {
   aircraftId: string;
@@ -32,6 +41,9 @@ export interface ScopeSettings {
   historyTrailLength: number;
   brightness: number;  // 0.0 - 1.0
   enabledVideoMaps: Record<string, boolean>;
+  velocityVectorMinutes: number; // 0=off, 1, 2
+  altFilterLow: number;   // ft MSL, 0 = no filter
+  altFilterHigh: number;  // ft MSL, 99900 = no filter
 }
 
 export interface GameStoreState {
@@ -42,6 +54,7 @@ export interface GameStoreState {
   // Session
   session: SessionInfo | null;
   inSession: boolean;
+  showBriefing: boolean;
 
   // Game state
   aircraft: AircraftState[];
@@ -73,11 +86,15 @@ export interface GameStoreState {
   departureStripOrder: string[];
   stripPanelCollapsed: boolean;
 
+  // Event log (controller awareness panel)
+  eventLog: EventLogEntry[];
+
   // Actions
   setConnected: (connected: boolean) => void;
   setConnectionError: (error: string | null) => void;
   setSession: (session: SessionInfo | null) => void;
   setInSession: (inSession: boolean) => void;
+  setShowBriefing: (show: boolean) => void;
   updateGameState: (state: GameState) => void;
   addRadioMessage: (transmission: RadioTransmission) => void;
   addAlert: (alert: Alert) => void;
@@ -94,10 +111,11 @@ export interface GameStoreState {
   setStripHighlight: (aircraftId: string, highlight: StripHighlight) => void;
   reorderStrips: (category: 'arrival' | 'departure', order: string[]) => void;
   setStripPanelCollapsed: (collapsed: boolean) => void;
+  addEventLogEntry: (entry: EventLogEntry) => void;
 }
 
 const DEFAULT_SCOPE_SETTINGS: ScopeSettings = {
-  range: 40,
+  range: 60,
   showFixes: true,
   showSIDs: true,
   showSTARs: true,
@@ -106,6 +124,9 @@ const DEFAULT_SCOPE_SETTINGS: ScopeSettings = {
   historyTrailLength: 5,
   brightness: 1.0,
   enabledVideoMaps: {},
+  velocityVectorMinutes: 1,
+  altFilterLow: 0,
+  altFilterHigh: 99900,
 };
 
 const MAX_RADIO_LOG = 200;
@@ -116,6 +137,7 @@ export const useGameStore = create<GameStoreState>((set) => ({
   connectionError: null,
   session: null,
   inSession: false,
+  showBriefing: false,
   aircraft: [],
   clock: null,
   weather: null,
@@ -134,6 +156,7 @@ export const useGameStore = create<GameStoreState>((set) => ({
   arrivalStripOrder: [],
   departureStripOrder: [],
   stripPanelCollapsed: false,
+  eventLog: [],
 
   // Actions
   setConnected: (connected) => set({ connected, connectionError: connected ? null : undefined }),
@@ -141,6 +164,7 @@ export const useGameStore = create<GameStoreState>((set) => ({
 
   setSession: (session) => set({ session }),
   setInSession: (inSession) => set({ inSession }),
+  setShowBriefing: (showBriefing) => set({ showBriefing }),
 
   updateGameState: (state) =>
     set((s) => {
@@ -265,4 +289,7 @@ export const useGameStore = create<GameStoreState>((set) => ({
     set(category === 'arrival' ? { arrivalStripOrder: order } : { departureStripOrder: order }),
 
   setStripPanelCollapsed: (collapsed) => set({ stripPanelCollapsed: collapsed }),
+
+  addEventLogEntry: (entry) =>
+    set((s) => ({ eventLog: [...s.eventLog.slice(-49), entry] })), // keep last 50
 }));

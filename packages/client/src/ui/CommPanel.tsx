@@ -7,7 +7,7 @@ const panelStyle: React.CSSProperties = {
   top: 24,
   right: 0,
   bottom: 32,
-  width: 220,
+  width: 260,
   background: STARSColors.panelBg,
   borderLeft: `1px solid ${STARSColors.panelBorder}`,
   display: 'flex',
@@ -23,7 +23,7 @@ const headerStyle: React.CSSProperties = {
   padding: '4px 8px',
   borderBottom: `1px solid ${STARSColors.panelBorder}`,
   color: STARSColors.dimText,
-  fontSize: 8,
+  fontSize: 10,
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
@@ -34,19 +34,28 @@ const logStyle: React.CSSProperties = {
   padding: '4px 6px',
 };
 
-const messageStyle = (isController: boolean): React.CSSProperties => ({
-  marginBottom: 3,
-  lineHeight: 1.4,
-  fontSize: 9,
-  color: isController ? STARSColors.radioController : STARSColors.radioPilot,
-  textShadow: isController ? `0 0 3px ${STARSColors.glow}` : 'none',
-  wordBreak: 'break-word',
-});
+const messageStyle = (from: string): React.CSSProperties => {
+  const isController = from === 'controller';
+  const isSystem = from === 'system';
+  return {
+    marginBottom: 4,
+    lineHeight: 1.45,
+    fontSize: isSystem ? 11 : 12,
+    color: isController
+      ? STARSColors.radioController
+      : isSystem
+        ? STARSColors.radioSystem
+        : STARSColors.radioPilot,
+    textShadow: isController ? `0 0 3px ${STARSColors.glow}` : 'none',
+    wordBreak: 'break-word',
+    fontStyle: isSystem ? 'italic' : 'normal',
+  };
+};
 
 const timeStyle: React.CSSProperties = {
   color: STARSColors.dimText,
   marginRight: 4,
-  fontSize: 8,
+  fontSize: 10,
   textShadow: 'none',
 };
 
@@ -69,14 +78,17 @@ export const CommPanel: React.FC = () => {
 
   return (
     <div style={panelStyle}>
-      <div style={headerStyle}>RADIO LOG</div>
+      <div style={headerStyle}>Comm Log</div>
       <div style={logStyle}>
         {radioLog.map((msg) => {
           const isController = msg.from === 'controller';
+          const isSystem = msg.from === 'system';
           return (
-            <div key={msg.id} style={messageStyle(isController)}>
+            <div key={msg.id} style={messageStyle(msg.from)}>
               <span style={timeStyle}>{formatLogTime(msg.timestamp)}</span>
-              <strong>{isController ? 'ATC' : msg.from}: </strong>
+              {!isSystem && (
+                <strong>{isController ? 'ATC' : msg.from}: </strong>
+              )}
               {msg.message}
             </div>
           );

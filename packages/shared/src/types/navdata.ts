@@ -141,6 +141,8 @@ export interface SID {
   runwayTransitions: ProcedureTransition[];
   /** Enroute transitions */
   enrouteTransitions: ProcedureTransition[];
+  /** Initial clearance altitude (ft MSL) — "climb via SID" top altitude */
+  topAltitude?: number;
 }
 
 /** Standard Terminal Arrival Route */
@@ -271,6 +273,16 @@ export interface AirportData {
   approaches: Approach[];
   /** Airspace boundaries */
   airspace: AirspaceBoundary[];
+  /** TRACON airspace vertical and lateral limits */
+  tracon?: {
+    name: string;
+    /** Upper limit of TRACON airspace (ft MSL) */
+    ceiling: number;
+    /** Lower limit (ft MSL, 0 = surface) */
+    floor: number;
+    /** Approximate lateral radius (nm) */
+    lateralRadiusNm: number;
+  };
   /** Video maps (optional - numbered/toggleable geographic overlays) */
   videoMaps?: VideoMap[];
 }

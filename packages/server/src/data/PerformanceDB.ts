@@ -73,8 +73,8 @@ class PerformanceDB {
         accelAltitude: 1000,
       },
       descent: {
-        standardRate: 1800,
-        maxRate: 3500,
+        standardRate: 2500,
+        maxRate: 4000,
         idleGradient: 3.0,
       },
       turn: {

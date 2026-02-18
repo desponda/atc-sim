@@ -2,3 +2,8 @@ node_modules/
 dist/
 *.tsbuildinfo
 .vite/
+
+# Debug screenshots and reference images captured during development
+*.png
+*.jpg
+*.jpeg

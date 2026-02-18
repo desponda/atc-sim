@@ -4,6 +4,8 @@ import type {
   ControllerCommand,
   RadioTransmission,
   AirportData,
+  HandoffCommand,
+  RequestTrafficSightCommand,
 } from '@atc-sim/shared';
 import { haversineDistance, initialBearing, headingDifference } from '@atc-sim/shared';
 import { AircraftManager } from '../engine/AircraftManager.js';
@@ -28,6 +30,8 @@ export interface CommandResult {
   rawText: string;
   error?: string;
   readback?: RadioTransmission;
+  /** True when the pilot should say "unable" on the radio (e.g. bad frequency) */
+  pilotUnable?: boolean;
 }
 
 /** Weather conditions for validation */
@@ -72,34 +76,75 @@ export class CommandExecutor {
       };
     }
 
-    // Validate each command
+    // Validate each command (pass full list so approach can see sibling heading)
     for (const cmd of command.commands) {
-      const validation = this.validate(ac, cmd);
+      const validation = this.validate(ac, cmd, command.commands);
       if (!validation.valid) {
         return {
           success: false,
           callsign: command.callsign,
           rawText: command.rawText,
           error: validation.reason,
+          pilotUnable: validation.pilotUnable,
         };
       }
     }
 
-    // Queue with pilot AI (adds delay + generates readback)
-    const readback = this.pilotAI.issueCommand(ac, command.commands, simTime);
+    // Radar handoff is an ATC-to-ATC data-link operation — execute immediately,
+    // no pilot delay and no pilot radio readback.
+    const hasRadarHandoff = command.commands.some(c => c.type === 'radarHandoff');
+    if (hasRadarHandoff) {
+      ac.radarHandoffState = 'offered';
+      ac.radarHandoffOfferedAt = simTime;
+      return { success: true, callsign: command.callsign, rawText: command.rawText };
+    }
+
+    // Sight query commands are executed inline (no pilot queue delay):
+    // controller asks immediately, pilot response is handled in PilotAI.update() ticks.
+    const hasSightQuery = command.commands.some(
+      c => c.type === 'requestFieldSight' || c.type === 'requestTrafficSight'
+    );
+    if (hasSightQuery) {
+      const currentTick = Math.floor(simTime / 1000);
+      for (const cmd of command.commands) {
+        if (cmd.type === 'requestFieldSight') {
+          ac.visualSight = {
+            state: 'queried',
+            queriedAtTick: currentTick,
+            responseDelay: 3 + Math.floor(Math.random() * 4), // 3–6 ticks
+          };
+        } else if (cmd.type === 'requestTrafficSight') {
+          ac.visualSight = {
+            state: 'queried',
+            queriedAtTick: currentTick,
+            responseDelay: 3 + Math.floor(Math.random() * 4),
+            trafficCallsign: (cmd as RequestTrafficSightCommand).trafficCallsign,
+          };
+        }
+      }
+      return {
+        success: true,
+        callsign: command.callsign,
+        rawText: command.rawText,
+      };
+    }
+
+    // Queue with pilot AI (adds delay + enqueues readback in RadioComms queue)
+    this.pilotAI.issueCommand(ac, command.commands, simTime);
 
     return {
       success: true,
       callsign: command.callsign,
       rawText: command.rawText,
-      readback,
+      // readback is now deferred — delivered via pilotAI.update() drain
     };
   }
 
   private validate(
     ac: AircraftState,
-    cmd: ATCCommand
-  ): { valid: boolean; reason?: string } {
+    cmd: ATCCommand,
+    allCmds: ATCCommand[] = []
+  ): { valid: boolean; reason?: string; pilotUnable?: boolean } {
     const perf = performanceDB.getOrDefault(ac.typeDesignator);
 
     switch (cmd.type) {
@@ -110,9 +155,15 @@ export class CommandExecutor {
             reason: `Unable, ${cmd.altitude}ft is outside operating limits`,
           };
         }
-        // Note: TRACON ceiling is advisory. Controllers may issue altitudes above
-        // the TRACON ceiling when coordinating with center or for initial descent
-        // instructions. The aircraft performance ceiling check above is sufficient.
+        // Enforce TRACON airspace ceiling
+        const traconCeiling = this.airportData?.tracon?.ceiling ?? TRACON_CEILING;
+        if (cmd.altitude > traconCeiling) {
+          const fl = Math.round(traconCeiling / 100);
+          return {
+            valid: false,
+            reason: `Unable, ${cmd.altitude}ft exceeds TRACON airspace ceiling FL${fl}. Hand off to Center first.`,
+          };
+        }
         break;
       }
       case 'heading': {
@@ -165,11 +216,15 @@ export class CommandExecutor {
           }
 
           // FAA 7110.65 5-9-2: Intercept angle check for ILS/RNAV vectors to final.
-          // Use the assigned heading if the aircraft is still turning, since
-          // that reflects the intercept heading the controller intended.
+          // If this clearance includes a heading command (compound: "r130, ci16"),
+          // use that new heading as the intercept heading — it hasn't been applied
+          // to the aircraft yet but it IS the controller's intended intercept heading.
           if (cmd.approachType === 'ILS' || cmd.approachType === 'RNAV') {
             const locCourse = runway.ilsCourse ?? runway.heading;
-            const effectiveHeading = ac.clearances.heading ?? ac.heading;
+            const siblingHeading = allCmds.find(c => c.type === 'heading');
+            const effectiveHeading = siblingHeading
+              ? (siblingHeading as { heading: number }).heading
+              : (ac.clearances.heading ?? ac.heading);
             const interceptAngle = Math.abs(headingDifference(effectiveHeading, locCourse));
 
             // Reject only extreme angles (> 90°) where the aircraft is clearly
@@ -184,21 +239,31 @@ export class CommandExecutor {
           }
 
           // FAA 7110.65 5-9-1: Altitude check for precision approaches.
-          // If the aircraft is above the glideslope, automatically imply
-          // "maintain until established" — the FlightPlanExecutor handles
-          // glideslope intercept from above (line 443). Only reject if
-          // absurdly high (> 3000ft above GS within 8nm — clearly an error).
           if (cmd.approachType === 'ILS') {
             const gsAltAtPosition = runway.elevation + (distToThreshold * GS_FT_PER_NM);
+
+            // Reject if impossibly high for glideslope intercept
             if (ac.altitude > gsAltAtPosition + 3000 && distToThreshold < 8) {
               return {
                 valid: false,
                 reason: `${ac.callsign} is at ${Math.round(ac.altitude)}ft, glideslope at this distance is ~${Math.round(gsAltAtPosition)}ft. Descend aircraft before clearing approach.`,
               };
             }
-            // Auto-apply maintain-until-established when aircraft is above GS
-            if (ac.altitude > gsAltAtPosition + 500 && !cmd.maintainUntilEstablished) {
-              cmd.maintainUntilEstablished = ac.clearances.altitude ?? Math.round(ac.altitude / 100) * 100;
+
+            // FAA 7110.65 5-9-2: When vectoring aircraft above the glideslope,
+            // controller MUST issue a "maintain X until established" restriction.
+            // A sibling altitude command (e.g. "dm 3000 ci16") satisfies this.
+            const siblingAlt = allCmds.find(c => c.type === 'altitude');
+            if (ac.altitude > gsAltAtPosition + 500 && !cmd.maintainUntilEstablished && !siblingAlt) {
+              const suggestedAlt = Math.round((ac.clearances.altitude ?? ac.altitude) / 100) * 100;
+              return {
+                valid: false,
+                reason: `Altitude restriction required per 7110.65 5-9-2. Include: "maintain ${suggestedAlt} until established, cleared ILS runway ${cmd.runway}"`,
+              };
+            }
+            // If a sibling altitude command is present, apply it as maintainUntilEstablished
+            if (siblingAlt && !cmd.maintainUntilEstablished) {
+              cmd.maintainUntilEstablished = (siblingAlt as { altitude: number }).altitude;
             }
           }
 
@@ -214,7 +279,91 @@ export class CommandExecutor {
                 reason: `Unable visual approach. Weather below VFR minimums (ceiling ${ceilStr}, visibility ${this.weather.visibility}SM). Need ceiling 1000ft+ and visibility 3SM+.`,
               };
             }
+            // Gate: aircraft must have field or traffic in sight before cv<rwy>
+            const sight = ac.visualSight;
+            if (!sight || (sight.state !== 'fieldSighted' && sight.state !== 'trafficSighted')) {
+              const hint = sight?.state === 'queried'
+                ? `Waiting for ${ac.callsign} to respond — try again shortly.`
+                : `Use "rfs" to ask ${ac.callsign} to report field in sight, or "rts <callsign>" for traffic in sight.`;
+              return {
+                valid: false,
+                reason: `${ac.callsign} has not reported field or traffic in sight. ${hint}`,
+              };
+            }
           }
+        }
+        break;
+      }
+      case 'descendViaSTAR': {
+        if (ac.category !== 'arrival' && ac.category !== 'overflight') {
+          return {
+            valid: false,
+            reason: `${ac.callsign} is a departure — use "climb via the SID" instead`,
+          };
+        }
+        if (!ac.flightPlan.star) {
+          return {
+            valid: false,
+            reason: `${ac.callsign} has no STAR assigned — issue a direct or altitude clearance instead`,
+          };
+        }
+        break;
+      }
+      case 'climbViaSID': {
+        if (ac.category !== 'departure') {
+          return {
+            valid: false,
+            reason: `${ac.callsign} is an arrival — use "descend via the STAR" instead`,
+          };
+        }
+        if (!ac.flightPlan.sid) {
+          return {
+            valid: false,
+            reason: `${ac.callsign} has no SID assigned — issue a direct or altitude clearance instead`,
+          };
+        }
+        break;
+      }
+      case 'radarHandoff': {
+        if (ac.handingOff) {
+          return { valid: false, reason: `${ac.callsign} already handed off` };
+        }
+        if (ac.radarHandoffState === 'offered' || ac.radarHandoffState === 'accepted') {
+          return { valid: false, reason: `Radar handoff already ${ac.radarHandoffState} for ${ac.callsign}` };
+        }
+        break;
+      }
+      case 'requestFieldSight': {
+        if (ac.category !== 'arrival' && ac.category !== 'overflight') {
+          return { valid: false, reason: `${ac.callsign} is not an arrival` };
+        }
+        if (ac.clearances.approach?.type === 'VISUAL') {
+          return { valid: false, reason: `${ac.callsign} is already cleared for visual approach` };
+        }
+        if (ac.visualSight?.state === 'queried') {
+          return { valid: false, reason: `${ac.callsign} is already reporting field in sight — wait for response` };
+        }
+        if (ac.visualSight?.state === 'fieldSighted') {
+          return { valid: false, reason: `${ac.callsign} already has field in sight — clear for visual approach` };
+        }
+        break;
+      }
+      case 'requestTrafficSight': {
+        if (ac.category !== 'arrival' && ac.category !== 'overflight') {
+          return { valid: false, reason: `${ac.callsign} is not an arrival` };
+        }
+        if (ac.clearances.approach?.type === 'VISUAL') {
+          return { valid: false, reason: `${ac.callsign} is already cleared for visual approach` };
+        }
+        const traffic = this.aircraftManager.getByCallsign(cmd.trafficCallsign);
+        if (!traffic) {
+          return { valid: false, reason: `Traffic ${cmd.trafficCallsign} not found` };
+        }
+        if (ac.visualSight?.state === 'queried') {
+          return { valid: false, reason: `${ac.callsign} is already looking for traffic — wait for response` };
+        }
+        if (ac.visualSight?.state === 'trafficSighted') {
+          return { valid: false, reason: `${ac.callsign} already has traffic in sight — clear for visual approach` };
         }
         break;
       }
@@ -224,6 +373,27 @@ export class CommandExecutor {
             valid: false,
             reason: `${ac.callsign} is already being handed off`,
           };
+        }
+        // Gate: center/departure handoffs require prior radar handoff acceptance
+        const facilityFromCmd = cmd.facility;
+        const facilityNeedsRadarHandoff = facilityFromCmd === 'center' || facilityFromCmd === 'departure';
+        if (facilityNeedsRadarHandoff && ac.radarHandoffState !== 'accepted') {
+          return {
+            valid: false,
+            reason: `Radar handoff not accepted for ${ac.callsign}. Click data block to initiate radar handoff first.`,
+          };
+        }
+        // Resolve facility from frequency when not explicitly stated
+        if (cmd.facility === null) {
+          const resolved = this.resolveFacility(cmd.frequency);
+          if (!resolved) {
+            return {
+              valid: false,
+              reason: `Unable, ${cmd.frequency.toFixed(2)} is not a recognized frequency`,
+              pilotUnable: true,
+            };
+          }
+          cmd.facility = resolved;
         }
         break;
       }
@@ -240,5 +410,19 @@ export class CommandExecutor {
     }
 
     return { valid: true };
+  }
+
+  /** Look up which facility a frequency belongs to using airport data */
+  private resolveFacility(freq: number): HandoffCommand['facility'] {
+    if (!this.airportData) return null;
+    const freqs = this.airportData.frequencies;
+    // Match within ±0.05 MHz to allow for minor float imprecision
+    const near = (list: number[]) => list.some(f => Math.abs(f - freq) < 0.05);
+    if (near(freqs.tower)) return 'tower';
+    if (near(freqs.ground)) return 'ground';
+    if (near(freqs.center)) return 'center';
+    if (near(freqs.departure)) return 'departure';
+    if (near(freqs.approach)) return 'approach';
+    return null;
   }
 }

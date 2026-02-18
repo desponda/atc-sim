@@ -36,7 +36,7 @@ const STRIP_FONT = "'Share Tech Mono', 'Courier New', monospace";
 const panelStyle = (collapsed: boolean): React.CSSProperties => ({
   position: 'absolute',
   top: 24,
-  right: collapsed ? -260 : 220, // Slide out of view when collapsed, or sit left of CommPanel
+  right: collapsed ? -260 : 260, // Slide out of view when collapsed, or sit left of CommPanel (260px wide)
   bottom: 32,
   width: 280,
   background: STRIP_COLORS.panelBg,
@@ -52,7 +52,7 @@ const panelStyle = (collapsed: boolean): React.CSSProperties => ({
 const collapseTabStyle: React.CSSProperties = {
   position: 'absolute',
   top: 24,
-  right: 220,
+  right: 260,
   width: 20,
   height: 60,
   background: STRIP_COLORS.collapseBtn,
@@ -247,28 +247,44 @@ const contextMenuItemStyle = (isDestructive?: boolean): React.CSSProperties => (
 
 // ── Helper functions ──
 
-function getEquipmentSuffix(ac: AircraftState): string {
-  // FAA equipment suffix based on capabilities implied by type
-  // /L = RNAVGPS + transponder mode C
-  return '/L';
+function getProcedureName(ac: AircraftState): string {
+  if (ac.category === 'arrival') {
+    return ac.flightPlan.star || '';
+  }
+  return ac.flightPlan.sid || '';
 }
 
 function getRouteDisplay(ac: AircraftState): string {
   const parts: string[] = [];
   if (ac.category === 'arrival') {
-    if (ac.flightPlan.star) parts.push(ac.flightPlan.star);
-    // Show current fix target
+    // Show current fix target and remaining route fixes
     if (ac.flightPlan.route.length > 0 && ac.currentFixIndex < ac.flightPlan.route.length) {
-      const remaining = ac.flightPlan.route.slice(ac.currentFixIndex, ac.currentFixIndex + 3);
+      const remaining = ac.flightPlan.route.slice(ac.currentFixIndex, ac.currentFixIndex + 4);
       parts.push(...remaining);
     }
   } else {
-    if (ac.flightPlan.sid) parts.push(ac.flightPlan.sid);
+    // Show route fixes for departures
     if (ac.flightPlan.route.length > 0) {
-      parts.push(...ac.flightPlan.route.slice(0, 3));
+      parts.push(...ac.flightPlan.route.slice(0, 4));
     }
   }
   return parts.join(' ') || '--';
+}
+
+function getCruiseAltDisplay(ac: AircraftState): string {
+  const alt = ac.flightPlan.cruiseAltitude;
+  if (!alt) return '';
+  if (alt >= 18000) return `FL${Math.round(alt / 100)}`;
+  return `${Math.round(alt / 100)}`;
+}
+
+function getWakeCategory(ac: AircraftState): string {
+  switch (ac.wakeCategory) {
+    case 'SUPER': return 'J';
+    case 'HEAVY': return 'H';
+    case 'LARGE': return 'L';
+    case 'SMALL': return 'S';
+  }
 }
 
 function getBandColor(ac: AircraftState, isAlert: boolean): string {
@@ -324,7 +340,10 @@ const FlightStrip: React.FC<FlightStripProps> = React.memo(({
   const speed = Math.round(ac.speed);
   const squawk = ac.flightPlan.squawk;
   const route = getRouteDisplay(ac);
-  const typeEquip = `${ac.typeDesignator}${getEquipmentSuffix(ac)}`;
+  const procedure = getProcedureName(ac);
+  const cruiseAlt = getCruiseAltDisplay(ac);
+  const wakeChar = getWakeCategory(ac);
+  const typeWake = `${ac.typeDesignator}/${wakeChar}`;
   const dest = ac.category === 'arrival'
     ? (ac.flightPlan.arrival?.replace(/^K/, '') || '')
     : (ac.flightPlan.arrival?.replace(/^K/, '') || '');
@@ -379,29 +398,33 @@ const FlightStrip: React.FC<FlightStripProps> = React.memo(({
       />
 
       <div style={stripBodyStyle}>
-        {/* Row 1: Category | Callsign | Type/Equip | Squawk | Route */}
+        {/* Row 1: Callsign | TYPE/W | sqk | Origin→Dest */}
         <div style={stripRow1Style}>
-          <span style={{
-            ...dimFieldStyle,
-            fontSize: 8,
-            fontWeight: 'bold',
-            minWidth: 22,
-          }}>
-            {ac.category === 'departure' ? 'DEP' : 'ARR'}
-          </span>
           <span style={callsignStyle}>{ac.callsign}</span>
-          <span style={fieldStyle}>{typeEquip}</span>
+          <span style={{ ...fieldStyle, fontWeight: 'bold', color: '#444', fontSize: 10 }}>
+            {typeWake}
+          </span>
           <span style={squawkStyle}>{squawk}</span>
           <span style={{ flex: 1 }} />
-          {appDisplay && (
-            <span style={{ ...fieldStyle, fontWeight: 'bold', color: '#0066aa' }}>
-              {appDisplay}
-            </span>
-          )}
+          <span style={{
+            ...fieldStyle,
+            fontWeight: 'bold',
+            color: '#555',
+            fontSize: 10,
+          }}>
+            {origin}{'\u2192'}{dest}
+          </span>
         </div>
 
-        {/* Row 2: Alt (with arrow) | Cleared Alt | Speed | Origin/Dest | Route snippet */}
+        {/* Row 2: filed alt | current alt / cleared alt | STAR/SID | approach/runway */}
         <div style={stripRow2Style}>
+          {cruiseAlt && (
+            <span style={{ ...dimFieldStyle, fontWeight: 'bold',
+              color: ac.category === 'departure' ? '#006600' : '#004488',
+              borderRight: `1px solid ${STRIP_COLORS.gridLine}`, paddingRight: 4 }}>
+              {cruiseAlt}
+            </span>
+          )}
           <span style={altFieldStyle(isClimbing, isDescending)}>
             {isClimbing ? '\u2191' : isDescending ? '\u2193' : ' '}
             {altHundreds}
@@ -411,17 +434,32 @@ const FlightStrip: React.FC<FlightStripProps> = React.memo(({
               {'\u2192'}{clearedAlt}
             </span>
           )}
-          <span style={dimFieldStyle}>{speed}kt</span>
-          <span style={{
-            ...dimFieldStyle,
-            borderLeft: `1px solid ${STRIP_COLORS.gridLine}`,
-            paddingLeft: 4,
-          }}>
-            {ac.category === 'departure' ? `${origin}\u2192${dest}` : `${origin}\u2192${dest}`}
-          </span>
           <span style={{ flex: 1 }} />
-          <span style={{ ...dimFieldStyle, maxWidth: 80, textAlign: 'right' }} title={route}>
-            {route.length > 12 ? route.slice(0, 12) + '..' : route}
+          {procedure && (
+            <span style={{
+              ...fieldStyle,
+              fontWeight: 'bold',
+              color: '#884400',
+              fontSize: 9,
+              borderRight: `1px solid ${STRIP_COLORS.gridLine}`,
+              paddingRight: 4,
+            }}>
+              {procedure}
+            </span>
+          )}
+          {appDisplay && (
+            <span style={{ ...fieldStyle, fontWeight: 'bold', color: '#0066aa', fontSize: 10 }}>
+              {appDisplay}
+            </span>
+          )}
+        </div>
+
+        {/* Row 3: speed | next fix / route */}
+        <div style={stripRow2Style}>
+          <span style={dimFieldStyle}>{speed}kt</span>
+          <span style={{ flex: 1 }} />
+          <span style={{ ...dimFieldStyle, maxWidth: 130, textAlign: 'right' }} title={route}>
+            {route.length > 24 ? route.slice(0, 24) + '..' : route}
           </span>
         </div>
 
@@ -676,7 +714,7 @@ export const FlightStripPanel: React.FC = () => {
       <div
         style={{
           ...collapseTabStyle,
-          right: stripPanelCollapsed ? 220 : 500,
+          right: stripPanelCollapsed ? 260 : 540,
           transition: 'right 0.2s ease-in-out',
         }}
         onClick={toggleCollapsed}

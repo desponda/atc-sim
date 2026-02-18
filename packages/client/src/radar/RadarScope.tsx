@@ -1,12 +1,13 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { CanvasManager } from './CanvasManager';
 import { useGameStore } from '../state/GameStore';
+import { getGameClient } from '../network/GameClient';
 
 const scopeContainerStyle = (stripPanelOpen: boolean): React.CSSProperties => ({
   position: 'absolute',
   top: 24,
   left: 200,
-  right: stripPanelOpen ? 500 : 220, // 220 CommPanel + 280 StripPanel when open
+  right: stripPanelOpen ? 540 : 260, // 260 CommPanel + 280 StripPanel when open
   bottom: 32,
   overflow: 'hidden',
   transition: 'right 0.2s ease-in-out',
@@ -51,6 +52,12 @@ export const RadarScope: React.FC = () => {
         const newRange = manager.projection.getRange();
         setScopeSettings({ range: newRange });
       },
+      onRadarHandoff: (id) => {
+        getGameClient().sendRadarHandoff(id);
+      },
+      onAcceptHandoff: (id) => {
+        getGameClient().sendAcceptHandoff(id);
+      },
     });
 
     managerRef.current = manager;
@@ -65,10 +72,20 @@ export const RadarScope: React.FC = () => {
     const overlayCanvas = container.children[3] as HTMLCanvasElement;
     if (overlayCanvas) {
       const handleClick = (e: MouseEvent) => {
+        // Suppress click if the left-button was used to pan the scope
+        if (manager.scopeInteraction.didLeftPan) return;
         const rect = overlayCanvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        manager.scopeInteraction.handleClick(x, y, useGameStore.getState().aircraft);
+        manager.scopeInteraction.handleClick(x, y, useGameStore.getState().aircraft, e.shiftKey, e.ctrlKey);
+      };
+
+      const handleDoubleClick = (e: MouseEvent) => {
+        const rect = overlayCanvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        manager.scopeInteraction.handleDoubleClick(x, y);
+        e.preventDefault();
       };
 
       const handleContextMenu = (e: MouseEvent) => {
@@ -79,12 +96,22 @@ export const RadarScope: React.FC = () => {
         manager.scopeInteraction.handleRightClick(x, y);
       };
 
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          manager.scopeInteraction.clearRBL();
+        }
+      };
+
       overlayCanvas.addEventListener('click', handleClick);
+      overlayCanvas.addEventListener('dblclick', handleDoubleClick);
       overlayCanvas.addEventListener('contextmenu', handleContextMenu);
+      document.addEventListener('keydown', handleKeyDown);
 
       return () => {
         overlayCanvas.removeEventListener('click', handleClick);
+        overlayCanvas.removeEventListener('dblclick', handleDoubleClick);
         overlayCanvas.removeEventListener('contextmenu', handleContextMenu);
+        document.removeEventListener('keydown', handleKeyDown);
         resizeObserver.disconnect();
         manager.destroy();
         managerRef.current = null;
@@ -113,6 +140,7 @@ export const RadarScope: React.FC = () => {
   // Sync selection
   useEffect(() => {
     managerRef.current?.setSelectedAircraft(selectedAircraftId);
+    managerRef.current?.scopeInteraction.setSelectedAircraftId(selectedAircraftId);
   }, [selectedAircraftId]);
 
   // Sync airport data
@@ -132,6 +160,8 @@ export const RadarScope: React.FC = () => {
 
     m.setRange(scopeSettings.range);
     m.setHistoryTrailLength(scopeSettings.historyTrailLength);
+    m.setVelocityVectorMinutes(scopeSettings.velocityVectorMinutes);
+    m.setAltitudeFilter(scopeSettings.altFilterLow, scopeSettings.altFilterHigh);
     m.setMapOptions({
       showFixes: scopeSettings.showFixes,
       showSIDs: scopeSettings.showSIDs,

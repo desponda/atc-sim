@@ -63,10 +63,14 @@ export const STARSColors = {
   selected: '#00ffff',
   /** Caution/warning - yellow */
   caution: '#ffff00',
+  /** Caution dim (flash off state) */
+  cautionDim: '#666600',
   /** Alert (imminent conflict) - red */
   alert: '#ff0000',
-  /** Coasting/ghost target - yellow */
-  coast: '#ffff00',
+  /** Alert dim (flash off state) */
+  alertDim: '#660000',
+  /** Coasting/ghost target - gray (aircraft handed off / leaving sector) */
+  coast: '#888888',
   /** Primary radar return (position symbol) - blue */
   primaryReturn: rgbHex(0.12, 0.48, 1),   // #1f7aff
 
@@ -101,6 +105,8 @@ export const STARSColors = {
   radioController: rgbHex(0.1, 0.9, 0.1),  // #1ae61a
   /** Pilot readbacks - dim white */
   radioPilot: '#aaaaaa',
+  /** ATC system events (data-link, handoffs) - dim cyan */
+  radioSystem: '#4499aa',
 
   // ─── Panel UI ───
   /** Panel background - pure black */
@@ -122,6 +128,22 @@ export const STARSColors = {
   /** Velocity vector / predicted track */
   velocityVector: '#004400',
 
+  // ─── Radar Handoff Colors ───
+  /** Radar handoff offered — amber flash */
+  handoffOffered: '#ffaa00',
+  /** Radar handoff offered dim (flash off state) */
+  handoffOfferedDim: '#664400',
+  /** Radar handoff accepted — green */
+  handoffAccepted: '#00ff88',
+
+  // ─── Inbound Handoff Colors (center offering arrival to us) ───
+  /** Inbound handoff offered — amber (center is offering arrival, we must accept) */
+  inboundHandoffOffered: '#ffaa00',
+  /** Inbound handoff offered dim (flash off state) */
+  inboundHandoffOfferedDim: '#664400',
+  /** Inbound handoff accepted — brief gray during check-in transition */
+  inboundHandoffAccepted: '#888888',
+
   // ─── Video Map Colors ───
   /** Geographic features (rivers, coastlines) */
   videoMapGeo: '#003344',
@@ -139,15 +161,15 @@ export const STARSFonts = {
   /** Primary STARS display font - monospace */
   family: "'Share Tech Mono', 'Courier New', monospace",
   /** Data block text size */
-  dataBlock: 11,
+  dataBlock: 13,
   /** Map label text size */
-  mapLabel: 9,
+  mapLabel: 11,
   /** Status bar text size */
-  statusBar: 12,
+  statusBar: 13,
   /** Command input text size */
-  commandInput: 13,
+  commandInput: 14,
   /** Panel text size */
-  panel: 10,
+  panel: 12,
 } as const;
 
 /** Target rendering sizes in pixels */
@@ -163,7 +185,7 @@ export const STARSSizes = {
   /** Default leader line length index (2 = 32px) */
   leaderLineLengthDefault: 2,
   /** Data block line height */
-  dataBlockLineHeight: 13,
+  dataBlockLineHeight: 16,
   /** Cursor crosshair size */
   crosshairSize: 15,
   /** Minimum click distance to select target (px) */

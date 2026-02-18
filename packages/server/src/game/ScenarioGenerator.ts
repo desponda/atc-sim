@@ -2,12 +2,13 @@ import type {
   AircraftState,
   AirportData,
   SessionConfig,
+  SID,
   STAR,
   Position,
   FlightPhase,
   FlightPlan,
 } from '@atc-sim/shared';
-import { destinationPoint, normalizeHeading, initialBearing } from '@atc-sim/shared';
+import { destinationPoint, normalizeHeading, initialBearing, haversineDistance } from '@atc-sim/shared';
 import { AircraftManager } from '../engine/AircraftManager.js';
 import { performanceDB } from '../data/PerformanceDB.js';
 
@@ -38,45 +39,69 @@ const BIZJET_TYPES = ['C56X', 'CL30'];
 const REGIONAL_AIRLINES = ['RPA', 'EDV', 'SKW', 'PDT', 'JIA'];
 const CARGO_AIRLINES = ['FDX', 'UPS'];
 
+/** Common origin/destination airports with positions for bearing computation */
+const COMMON_AIRPORTS = [
+  { icao: 'KJFK', lat: 40.64, lon: -73.78 },
+  { icao: 'KEWR', lat: 40.69, lon: -74.17 },
+  { icao: 'KLGA', lat: 40.78, lon: -73.87 },
+  { icao: 'KBOS', lat: 42.36, lon: -71.01 },
+  { icao: 'KATL', lat: 33.64, lon: -84.43 },
+  { icao: 'KORD', lat: 41.97, lon: -87.91 },
+  { icao: 'KDFW', lat: 32.90, lon: -97.04 },
+  { icao: 'KDCA', lat: 38.85, lon: -77.04 },
+  { icao: 'KFLL', lat: 26.07, lon: -80.15 },
+  { icao: 'KMCO', lat: 28.43, lon: -81.31 },
+  { icao: 'KDEN', lat: 39.86, lon: -104.67 },
+  { icao: 'KIAH', lat: 29.98, lon: -95.34 },
+  { icao: 'KCLT', lat: 35.21, lon: -80.94 },
+  { icao: 'KPHL', lat: 39.87, lon: -75.24 },
+  { icao: 'KBWI', lat: 39.18, lon: -76.67 },
+  { icao: 'KBDL', lat: 41.94, lon: -72.68 },
+  { icao: 'KRDU', lat: 35.88, lon: -78.79 },
+  { icao: 'KMIA', lat: 25.79, lon: -80.29 },
+];
+
 /** VFR aircraft types (includes bizjets for N-number IFR traffic) */
 const VFR_TYPES = ['C172', 'C182', 'SR22', 'C56X', 'CL30'];
 
 /** VFR callsign prefixes (N-numbers) */
 const VFR_PREFIXES = ['N'];
 
-/** Density -> operations per hour */
+/** Density -> operations per hour (steady state) */
 const DENSITY_OPS: Record<string, number> = {
-  light: 8,
-  moderate: 16,
-  heavy: 28,
+  light: 10,
+  moderate: 24,
+  heavy: 36,
 };
 
-/** Density -> initial aircraft count to pre-spawn */
-const DENSITY_INITIAL: Record<string, number> = {
-  light: 4,
-  moderate: 7,
-  heavy: 14,
+/** How many aircraft to spawn in the warm-up phase before settling into normal rate */
+const WARM_UP_COUNT: Record<string, number> = {
+  light: 3,
+  moderate: 6,
+  heavy: 8,
 };
 
-/** Pre-spawn distance tiers (nm from airport) with altitude ranges */
-const ARRIVAL_TIERS = [
-  { minDist: 40, maxDist: 50, minAlt: 10000, maxAlt: 12000 },
-  { minDist: 30, maxDist: 40, minAlt: 8000, maxAlt: 10000 },
-  { minDist: 20, maxDist: 30, minAlt: 7000, maxAlt: 9000 },
-  { minDist: 10, maxDist: 18, minAlt: 4000, maxAlt: 6000 },
-];
+/** Seconds between spawns during warm-up (shorter = quicker first traffic) */
+const WARM_UP_INTERVAL_SECS: Record<string, number> = {
+  light: 25,
+  moderate: 15,
+  heavy: 10,
+};
 
 /**
  * ScenarioGenerator spawns traffic into the simulation.
  */
+/** Minimum seconds between departure spawns to prevent immediate conflicts */
+const MIN_DEPARTURE_SEPARATION_SECS = 120;
+
 export class ScenarioGenerator {
   private airportData: AirportData;
   private config: SessionConfig;
   private aircraftManager: AircraftManager;
-  private flightNumberCounter = 100;
   private lastSpawnTick = 0;
+  private lastDepartureTick = -9999; // far in the past so first departure spawns freely
   private usedCallsigns = new Set<string>();
-  private hasPreSpawned = false;
+  private totalSpawned = 0;
   private vfrCounter = 0;
 
   constructor(
@@ -95,19 +120,15 @@ export class ScenarioGenerator {
    * that higher time-scale values produce proportionally more traffic per tick.
    */
   update(tickCount: number, timeScale: number): AircraftState | null {
-    // Pre-spawn aircraft on first call
-    if (!this.hasPreSpawned) {
-      this.hasPreSpawned = true;
-      this.preSpawnTraffic();
-      this.lastSpawnTick = tickCount;
-      return null;
-    }
-
+    const warmupCount = WARM_UP_COUNT[this.config.density] ?? 3;
+    const warmupIntervalSecs = WARM_UP_INTERVAL_SECS[this.config.density] ?? 50;
     const opsPerHour = DENSITY_OPS[this.config.density] || 16;
-    // Interval in ticks: seconds-between-spawns divided by timeScale.
-    // At 28 ops/hour, 1x: 3600/28 = ~129 ticks
-    // At 28 ops/hour, 4x: 3600/28/4 = ~32 ticks
-    const intervalTicks = Math.max(1, Math.round((3600 / opsPerHour) / timeScale));
+
+    // Warm-up phase: first few aircraft spawn on a shorter interval to ease the
+    // player in; after that, settle into the normal density-based rate.
+    const inWarmup = this.totalSpawned < warmupCount;
+    const intervalSecs = inWarmup ? warmupIntervalSecs : (3600 / opsPerHour);
+    const intervalTicks = Math.max(1, Math.round(intervalSecs / timeScale));
 
     if (tickCount - this.lastSpawnTick < intervalTicks) {
       return null;
@@ -118,10 +139,12 @@ export class ScenarioGenerator {
     const scenarioType = this.config.scenarioType;
 
     // VFR traffic chance: only in mixed scenarios, lower for heavy density
-    if (scenarioType === 'mixed') {
+    if (scenarioType === 'mixed' && !inWarmup) {
       const vfrChance = this.config.density === 'heavy' ? 0.05 : 0.15;
       if (Math.random() < vfrChance) {
-        return this.spawnVFR();
+        const vfr = this.spawnVFR();
+        this.totalSpawned++;
+        return vfr;
       }
     }
 
@@ -135,64 +158,30 @@ export class ScenarioGenerator {
       isArrival = Math.random() < 0.6; // Mixed: 60% arrivals
     }
 
-    if (isArrival) {
-      return this.spawnArrival();
-    } else {
-      return this.spawnDeparture();
-    }
-  }
-
-  /**
-   * Pre-spawn a batch of aircraft at session start, staggered at different
-   * distances and altitudes to create an immediately populated scope.
-   */
-  private preSpawnTraffic(): void {
-    const count = DENSITY_INITIAL[this.config.density] || 7;
-    const scenarioType = this.config.scenarioType;
-
-    // Decide arrival/departure split
-    let arrivalCount: number;
-    let departureCount: number;
-    if (scenarioType === 'arrivals') {
-      arrivalCount = count;
-      departureCount = 0;
-    } else if (scenarioType === 'departures') {
-      arrivalCount = 0;
-      departureCount = count;
-    } else {
-      arrivalCount = Math.ceil(count * 0.65);
-      departureCount = count - arrivalCount;
-    }
-
-    // Spawn arrivals at staggered distances
-    for (let i = 0; i < arrivalCount; i++) {
-      const tier = ARRIVAL_TIERS[i % ARRIVAL_TIERS.length];
-      this.spawnArrivalAtDistance(tier);
-    }
-
-    // Spawn departures at various climb-out points
-    for (let i = 0; i < departureCount; i++) {
-      this.spawnDepartureClimbout(i);
-    }
-
-    // Add 1-2 VFR targets for realism (only in mixed scenarios)
-    let vfrCount = 0;
-    if (scenarioType === 'mixed') {
-      vfrCount = Math.random() < 0.5 ? 1 : 2;
-      for (let i = 0; i < vfrCount; i++) {
-        this.spawnVFR();
+    // Enforce minimum departure separation to prevent simultaneous takeoffs.
+    // If a departure is due but the runway hasn't cleared yet, spawn an arrival
+    // instead (or skip if arrivals-only scenario is not applicable).
+    const minDepTicks = Math.max(1, Math.round(MIN_DEPARTURE_SEPARATION_SECS / timeScale));
+    if (!isArrival && tickCount - this.lastDepartureTick < minDepTicks) {
+      if (scenarioType === 'departures') {
+        return null; // Wait for runway to clear
       }
+      isArrival = true; // Swap to an arrival instead
     }
 
-    console.log(
-      `[ScenarioGenerator] Pre-spawned ${arrivalCount} arrivals, ${departureCount} departures, ${vfrCount} VFR`
-    );
+    const ac = isArrival ? this.spawnArrival() : this.spawnDeparture();
+    if (!isArrival && ac) {
+      this.lastDepartureTick = tickCount;
+    }
+    if (ac) this.totalSpawned++;
+    return ac;
   }
 
   /**
    * Spawn an arrival at a specific distance tier from the airport.
+   * Used by the playtest harness; not called during normal gameplay.
    */
-  private spawnArrivalAtDistance(tier: {
+  spawnArrivalAtDistance(tier: {
     minDist: number;
     maxDist: number;
     minAlt: number;
@@ -203,7 +192,7 @@ export class ScenarioGenerator {
     const star = this.pickStar();
 
     // Get STAR entry position or generate one at the tier distance
-    const starEntry = this.getStarEntryPosition(star);
+    const { position: starEntry, transitionName } = this.pickStarTransition(star);
     const bearingFromAirport = initialBearing(this.airportData.position, starEntry);
 
     // Place aircraft at random distance within tier along the bearing from airport
@@ -219,18 +208,17 @@ export class ScenarioGenerator {
     // Heading toward airport
     const bearing = initialBearing(position, this.airportData.position);
 
-    const route = star.commonLegs
-      .filter(l => l.fix)
-      .map(l => l.fix!.id);
+    const arrivalRunway = this.pickArrivalRunway();
+    const route = this.getStarRoute(star, arrivalRunway, transitionName);
 
     const flightPlan: FlightPlan = {
-      departure: 'ZZZZ',
+      departure: pickRandom(COMMON_AIRPORTS).icao,
       arrival: this.airportData.icao,
       cruiseAltitude: 35000,
       route,
       sid: null,
       star: star.name,
-      runway: this.pickArrivalRunway(),
+      runway: arrivalRunway,
       squawk: this.aircraftManager.nextSquawk(),
     };
 
@@ -246,106 +234,65 @@ export class ScenarioGenerator {
       flightPhase: 'descent',
     });
 
-    // Set targetAltitude to current altitude so the aircraft maintains its
-    // altitude until ATC issues a descent instruction or VNAV takes over.
+    // Set targetAltitude and clearances.altitude to spawn altitude.
+    // clearances.altitude represents the altitude center assigned before
+    // handing off to approach — visible on flight strips and data blocks.
     ac.targetAltitude = altitude;
-    if (star.commonLegs.length > 0) {
-      // STAR with altitude constraints: let VNAV manage the descent.
-      // clearances.altitude is left null so auto-descent and VNAV both work.
+    ac.clearances.altitude = altitude;
+    if (route.length > 0) {
+      // STAR has navigable legs: let VNAV manage altitude constraints
       ac.clearances.descendViaSTAR = true;
       ac.clearances.procedure = star.name;
-    } else {
-      // No STAR constraints: hold altitude until ATC clears descent.
-      ac.clearances.altitude = altitude;
     }
+
+    // Center pre-offers handoff for all arrivals — controller must accept
+    // before the aircraft checks in on approach frequency.
+    ac.inboundHandoff = 'offered';
+    ac.inboundHandoffOfferedAt = Date.now();
 
     return ac;
   }
 
-  /**
-   * Spawn a departure already climbing out.
-   */
-  private spawnDepartureClimbout(index: number): AircraftState {
-    const { callsign, typeDesignator } = this.generateCallsign();
-
-    const runway = this.pickDepartureRunway();
-    const rwyData = this.airportData.runways.find(r => r.id === runway);
-    const heading = rwyData?.heading ?? 160;
-
-    // Stagger departures at different distances (3-12nm) and altitudes
-    const dist = 3 + index * 3 + Math.random() * 2;
-    const startPos = destinationPoint(this.airportData.position, heading, dist);
-    const altitude = 1500 + Math.min(index * 1500, 6000) + Math.floor(Math.random() * 5) * 100;
-
-    const sid = this.pickSid();
-    const route = sid
-      ? sid.commonLegs.filter(l => l.fix).map(l => l.fix!.id)
-      : [];
-
-    const flightPlan: FlightPlan = {
-      departure: this.airportData.icao,
-      arrival: 'ZZZZ',
-      cruiseAltitude: 35000,
-      route,
-      sid: sid?.name ?? null,
-      star: null,
-      runway,
-      squawk: this.aircraftManager.nextSquawk(),
-    };
-
-    const ac = this.aircraftManager.spawnAircraft({
-      callsign,
-      typeDesignator,
-      position: startPos,
-      altitude,
-      heading,
-      speed: altitude > 3000 ? 230 : 200,
-      flightPlan,
-      category: 'departure',
-      flightPhase: 'departure',
-    });
-
-    // Set departure target altitude so they climb
-    ac.targetAltitude = Math.min(flightPlan.cruiseAltitude, 10000);
-    if (sid) {
-      ac.clearances.climbViaSID = true;
-      ac.clearances.procedure = sid.name;
+  private spawnArrival(): AircraftState | null {
+    // 35% chance of a vectored arrival from a non-STAR direction (N/NE/E/SE)
+    // to fill in the eastern semicircle not covered by KRIC's three STARs (SW/W/NW).
+    if (Math.random() < 0.35) {
+      return this.spawnVectoredArrival();
     }
 
-    return ac;
-  }
-
-  private spawnArrival(): AircraftState {
     const { callsign, typeDesignator } = this.generateCallsign();
 
-    // Pick a STAR and its entry fix
-    const star = this.pickStar();
-    const entryFix = this.getStarEntryPosition(star);
+    // Pick a STAR, avoiding STARs with traffic too close to the entry fix
+    const star = this.pickDeconflictedStar();
+    if (!star) return this.spawnVectoredArrival(); // All STARs congested — vector in instead
 
-    // Entry altitude 10000-15000 (realistic STAR entry altitudes)
-    const altitude = 10000 + Math.floor(Math.random() * 6) * 1000;
+    // Pick enroute transition randomly (gives KELCE *or* NEAVL for DUCXS5, etc.)
+    const { position: entryFix, transitionName } = this.pickStarTransition(star);
+
+    // Entry altitude 8000-12000 (realistic TRACON handoff altitudes for KRIC area)
+    const altitude = 8000 + Math.floor(Math.random() * 3) * 1000;
     const speed = altitude > 10000 ? 280 : 250;
 
     // Heading toward airport
     const bearing = initialBearing(entryFix, this.airportData.position);
 
-    // Build route from STAR legs
-    const route = star.commonLegs
-      .filter(l => l.fix)
-      .map(l => l.fix!.id);
+    const arrivalRunway = this.pickArrivalRunway();
+
+    // Build full route: enroute transition legs + common legs + runway transition legs
+    const route = this.getStarRoute(star, arrivalRunway, transitionName);
 
     const flightPlan: FlightPlan = {
-      departure: 'ZZZZ', // Unknown origin
+      departure: pickRandom(COMMON_AIRPORTS).icao,
       arrival: this.airportData.icao,
       cruiseAltitude: 35000,
       route,
       sid: null,
       star: star.name,
-      runway: this.pickArrivalRunway(),
+      runway: arrivalRunway,
       squawk: this.aircraftManager.nextSquawk(),
     };
 
-    return this.aircraftManager.spawnAircraft({
+    const ac = this.aircraftManager.spawnAircraft({
       callsign,
       typeDesignator,
       position: entryFix,
@@ -356,6 +303,81 @@ export class ScenarioGenerator {
       category: 'arrival',
       flightPhase: 'descent',
     });
+
+    // Center-assigned altitude: visible on flight strips and data blocks
+    ac.targetAltitude = altitude;
+    ac.clearances.altitude = altitude;
+    if (route.length > 0) {
+      // STAR has navigable legs: let VNAV manage altitude constraints
+      ac.clearances.descendViaSTAR = true;
+      ac.clearances.procedure = star.name;
+    }
+
+    // Center pre-offers handoff for all arrivals — controller must accept
+    // before the aircraft checks in on approach frequency.
+    ac.inboundHandoff = 'offered';
+    ac.inboundHandoffOfferedAt = Date.now();
+
+    return ac;
+  }
+
+  /**
+   * Spawn a vectored arrival from a direction not covered by published STARs.
+   * KRIC STARs cover SW/W/NW — this fills in N/NE/E/SE/S.
+   */
+  private spawnVectoredArrival(): AircraftState | null {
+    const { callsign, typeDesignator } = this.generateCallsign();
+
+    // Bearing ranges not served by KRIC STARs (approx SW=200-250, W=260-290, NW=300-350)
+    // Fill: N (350-020), NE (020-080), E (080-140), S/SE (140-200)
+    const nonStarSectors: [number, number][] = [
+      [350, 20],
+      [20, 80],
+      [80, 140],
+      [140, 200],
+    ];
+    const [minB, maxB] = pickRandom(nonStarSectors);
+    const span = maxB > minB ? maxB - minB : maxB + 360 - minB;
+    const bearing = normalizeHeading(minB + Math.random() * span);
+
+    const dist = 35 + Math.random() * 10; // 35-45nm
+    const position = destinationPoint(this.airportData.position, bearing, dist);
+    const altitude = 8000 + Math.floor(Math.random() * 5) * 1000; // 8000-12000
+    const heading = initialBearing(position, this.airportData.position);
+    const arrivalRunway = this.pickArrivalRunway();
+
+    const flightPlan: FlightPlan = {
+      departure: pickRandom(COMMON_AIRPORTS).icao,
+      arrival: this.airportData.icao,
+      cruiseAltitude: 35000,
+      route: [], // No STAR — controller will vector to final
+      sid: null,
+      star: null,
+      runway: arrivalRunway,
+      squawk: this.aircraftManager.nextSquawk(),
+    };
+
+    const ac = this.aircraftManager.spawnAircraft({
+      callsign,
+      typeDesignator,
+      position,
+      altitude,
+      heading: normalizeHeading(heading),
+      speed: altitude > 10000 ? 280 : 250,
+      flightPlan,
+      category: 'arrival',
+      flightPhase: 'descent',
+    });
+
+    ac.targetAltitude = altitude;
+    ac.clearances.altitude = altitude;
+
+    // Center pre-offers handoff for all arrivals — controller must accept
+    // before the aircraft checks in on approach frequency.
+    ac.inboundHandoff = 'offered';
+    ac.inboundHandoffOfferedAt = Date.now();
+
+    return ac;
   }
 
   private spawnDeparture(): AircraftState {
@@ -364,7 +386,11 @@ export class ScenarioGenerator {
     // Departures start at the airport, ready for takeoff
     const runway = this.pickDepartureRunway();
     const rwyData = this.airportData.runways.find(r => r.id === runway);
-    const heading = rwyData?.heading ?? 160;
+    // Use actual geographic bearing (threshold→end) so the departure heading
+    // matches the rendered runway line exactly, eliminating centerline offset.
+    const heading = rwyData
+      ? initialBearing(rwyData.threshold, rwyData.end)
+      : 160;
 
     // Spawn at the runway threshold at airport elevation
     const startPos = rwyData
@@ -372,14 +398,17 @@ export class ScenarioGenerator {
       : this.airportData.position;
     const altitude = rwyData?.elevation ?? this.airportData.elevation;
 
-    const sid = this.pickSid();
+    // Pick destination first, then choose SID based on direction of flight
+    const dest = pickRandom(COMMON_AIRPORTS);
+    const destBearing = initialBearing(this.airportData.position, { lat: dest.lat, lon: dest.lon });
+    const sid = this.pickSidForDirection(destBearing);
     const route = sid
-      ? sid.commonLegs.filter(l => l.fix).map(l => l.fix!.id)
+      ? this.getSidRoute(sid, runway)
       : [];
 
     const flightPlan: FlightPlan = {
       departure: this.airportData.icao,
-      arrival: 'ZZZZ',
+      arrival: dest.icao,
       cruiseAltitude: 35000,
       route,
       sid: sid?.name ?? null,
@@ -402,11 +431,43 @@ export class ScenarioGenerator {
 
     // Ground departure: aircraft is on the runway ready for takeoff
     ac.onGround = true;
-    ac.targetAltitude = Math.min(flightPlan.cruiseAltitude, 10000);
     ac.targetSpeed = 0;
+    // Use SID top altitude if defined, else default to airport elevation + 4000ft
+    // rounded to nearest 1000 (works for both sea-level and mountainous airports)
+    const airportElev = this.airportData.elevation ?? 0;
+    const defaultTopAlt = Math.round((airportElev + 4000) / 1000) * 1000;
+    const sidTopAlt = sid?.topAltitude ?? defaultTopAlt;
+    ac.targetAltitude = Math.min(flightPlan.cruiseAltitude, sidTopAlt);
+    // Pre-assign initial climb altitude (from clearance delivery) so the data
+    // block shows it and the pilot includes it in their check-in call.
+    ac.clearances.altitude = ac.targetAltitude;
     if (sid) {
       ac.clearances.climbViaSID = true;
       ac.clearances.procedure = sid.name;
+      // Extract VA/VI/VD departure legs for initial heading guidance
+      const rwyTrans = sid.runwayTransitions.find(
+        t => t.name === `RW${runway}` || t.name === runway
+      );
+      if (rwyTrans) {
+        const depLegs = rwyTrans.legs
+          .filter(l => (l.legType === 'VA' || l.legType === 'VI' || l.legType === 'VD') && l.course !== undefined)
+          .map(l => {
+            const ac = l.altitudeConstraint;
+            const altConstraint = ac
+              ? (ac.type === 'between' ? ac.min : ac.altitude)
+              : undefined;
+            return {
+              legType: l.legType as 'VA' | 'VI' | 'VD',
+              course: l.course!,
+              altConstraint,
+              turnDirection: l.turnDirection,
+            };
+          });
+        if (depLegs.length > 0) {
+          ac.sidLegs = depLegs;
+          ac.sidLegIdx = 0;
+        }
+      }
     }
 
     return ac;
@@ -470,10 +531,17 @@ export class ScenarioGenerator {
     // Pick airline based on weighted mix
     const airline = this.pickAirline();
     let callsign: string;
+    // Generate realistic-looking flight numbers: pick from random ranges to avoid
+    // sequential clusters (e.g. 101,102,103). Use ranges typical for airline ops.
+    const ranges = [[100, 999], [1000, 9999]] as const;
+    const useShort = Math.random() < 0.7; // 70% chance of 3-digit
+    const [lo, hi] = useShort ? ranges[0] : ranges[1];
+    let attempts = 0;
     do {
-      this.flightNumberCounter++;
-      callsign = `${airline}${this.flightNumberCounter}`;
-    } while (this.usedCallsigns.has(callsign));
+      const num = lo + Math.floor(Math.random() * (hi - lo + 1));
+      callsign = `${airline}${num}`;
+      attempts++;
+    } while (this.usedCallsigns.has(callsign) && attempts < 200);
     this.usedCallsigns.add(callsign);
 
     // Pick aircraft type
@@ -519,21 +587,163 @@ export class ScenarioGenerator {
     return pickRandom(stars);
   }
 
+  /**
+   * Pick a STAR that doesn't have existing traffic too close to its entry fix.
+   * Ensures minimum 10nm spacing between same-STAR arrivals at entry.
+   */
+  private pickDeconflictedStar(): STAR | null {
+    const stars = this.airportData.stars;
+    if (stars.length === 0) return null;
+
+    const existing = this.aircraftManager.getAll();
+    const MIN_SPACING_NM = 10;
+
+    // Shuffle STARs to avoid bias
+    const shuffled = [...stars].sort(() => Math.random() - 0.5);
+
+    for (const star of shuffled) {
+      const entryFix = this.getStarEntryPosition(star);
+      let tooClose = false;
+
+      for (const ac of existing) {
+        if (ac.flightPlan.star !== star.name) continue;
+        const dist = haversineDistance(ac.position, entryFix);
+        if (dist < MIN_SPACING_NM) {
+          tooClose = true;
+          break;
+        }
+      }
+
+      if (!tooClose) return star;
+    }
+
+    // All STARs congested — skip this spawn cycle
+    return null;
+  }
+
   private pickSid() {
     const sids = this.airportData.sids;
     if (sids.length === 0) return null;
     return pickRandom(sids);
   }
 
-  private getStarEntryPosition(star: STAR): Position {
-    // Use the first fix of the STAR as the entry point
-    if (star.commonLegs.length > 0 && star.commonLegs[0].fix) {
-      return star.commonLegs[0].fix.position;
+  /**
+   * Get the terminal (last) fix position of a SID.
+   * Checks commonLegs in reverse, then falls back to the last fix in any runway transition.
+   */
+  private getSidTerminalPosition(sid: SID): Position | null {
+    // Check commonLegs in reverse for the last fix with a position
+    for (let i = sid.commonLegs.length - 1; i >= 0; i--) {
+      if (sid.commonLegs[i].fix) {
+        return sid.commonLegs[i].fix!.position;
+      }
+    }
+    // Fallback: check runway transitions
+    for (const trans of sid.runwayTransitions) {
+      for (let i = trans.legs.length - 1; i >= 0; i--) {
+        if (trans.legs[i].fix) {
+          return trans.legs[i].fix!.position;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Pick the SID whose terminal fix bearing best matches the destination bearing.
+   */
+  private pickSidForDirection(destBearing: number): SID | null {
+    const sids = this.airportData.sids;
+    if (sids.length === 0) return null;
+
+    let bestSid: SID | null = null;
+    let bestDiff = Infinity;
+
+    for (const sid of sids) {
+      const termPos = this.getSidTerminalPosition(sid);
+      if (!termPos) continue;
+      const sidBearing = initialBearing(this.airportData.position, termPos);
+      const diff = Math.abs(((destBearing - sidBearing + 540) % 360) - 180);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestSid = sid;
+      }
     }
 
-    // Fallback: random point on airspace boundary at ~40nm
+    return bestSid ?? pickRandom(sids);
+  }
+
+  /** Extract route fixes from a SID, falling back to runway transitions if commonLegs is empty */
+  private getSidRoute(sid: SID, runway: string): string[] {
+    const route = sid.commonLegs.filter(l => l.fix).map(l => l.fix!.id);
+    if (route.length > 0) return route;
+    const rwyTrans = sid.runwayTransitions.find(
+      t => t.name === `RW${runway}` || t.name === runway
+    );
+    if (rwyTrans) return rwyTrans.legs.filter(l => l.fix).map(l => l.fix!.id);
+    return [];
+  }
+
+  /**
+   * Randomly pick an enroute transition from a STAR and return the entry position
+   * and transition name. Falls back to commonLegs[0] if no enroute transitions exist.
+   */
+  private pickStarTransition(star: STAR): { position: Position; transitionName: string | null } {
+    if (star.enrouteTransitions.length > 0) {
+      const trans = pickRandom(star.enrouteTransitions);
+      const firstLeg = trans.legs.find(l => l.fix);
+      if (firstLeg?.fix) {
+        return { position: firstLeg.fix.position, transitionName: trans.name };
+      }
+    }
+    // Fallback to first commonLeg fix
+    if (star.commonLegs.length > 0 && star.commonLegs[0].fix) {
+      return { position: star.commonLegs[0].fix.position, transitionName: null };
+    }
+    // Last resort: random point at ~40nm
     const bearing = Math.random() * 360;
-    return destinationPoint(this.airportData.position, bearing, 40);
+    return { position: destinationPoint(this.airportData.position, bearing, 40), transitionName: null };
+  }
+
+  /** Legacy single-position getter used by spawnArrivalAtDistance */
+  private getStarEntryPosition(star: STAR): Position {
+    return this.pickStarTransition(star).position;
+  }
+
+  /**
+   * Build the ordered list of route fix IDs for a STAR.
+   * Combines enroute transition legs → common legs → runway transition legs,
+   * deduplicating any fix that appears at the join point between sections.
+   */
+  private getStarRoute(star: STAR, runway: string, transitionName?: string | null): string[] {
+    // Resolve the selected enroute transition (if any)
+    const enrouteTrans = transitionName
+      ? star.enrouteTransitions.find(t => t.name === transitionName) ?? null
+      : star.enrouteTransitions.length === 1 ? star.enrouteTransitions[0] : null;
+
+    const enrouteLegs = enrouteTrans
+      ? enrouteTrans.legs.filter(l => l.fix).map(l => l.fix!.id)
+      : [];
+
+    const commonLegs = star.commonLegs.filter(l => l.fix).map(l => l.fix!.id);
+
+    // Find matching runway transition
+    const rwyTrans = star.runwayTransitions.find(
+      t => t.name === `RW${runway}` || t.name === runway
+    );
+    const rwyLegs = rwyTrans ? rwyTrans.legs.filter(l => l.fix).map(l => l.fix!.id) : [];
+
+    // Merge: enroute → common → runway, deduplicating shared boundary fixes
+    const dedupAppend = (base: string[], next: string[]): string[] => {
+      if (next.length === 0) return base;
+      const start = base.length > 0 && next[0] === base[base.length - 1] ? 1 : 0;
+      return [...base, ...next.slice(start)];
+    };
+
+    let route = enrouteLegs;
+    route = dedupAppend(route, commonLegs);
+    route = dedupAppend(route, rwyLegs);
+    return route;
   }
 
   private pickArrivalRunway(): string {

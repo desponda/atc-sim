@@ -6,11 +6,23 @@ import { v4 as uuid } from 'uuid';
 const LATERAL_SEP_NM = 3;
 const VERTICAL_SEP_FT = 1000;
 
-/** Prediction lookahead times (seconds) */
-const LOOKAHEAD_TIMES = [30, 60, 120];
+/** Prediction lookahead times (seconds) — keep short for TRACON to avoid false positives */
+const LOOKAHEAD_TIMES = [30, 60];
 
 /** Minimum safe altitude for TRACON area (ft MSL) */
 const DEFAULT_MVA = 2000;
+
+/** TRACON lateral boundary radius (nm from airport) */
+const TRACON_RADIUS_NM = 60;
+
+/** Warn when aircraft is within this many nm of the boundary without a handoff */
+const AIRSPACE_WARN_NM = 5;
+
+/** Airport field elevation (ft MSL) - KRIC */
+const FIELD_ELEVATION_FT = 167;
+
+/** AGL threshold below which aircraft on final are excluded from TRACON separation */
+const FINAL_EXCLUDE_AGL_FT = 500;
 
 /** Runway occupancy thresholds */
 const ON_RUNWAY_DIST_NM = 0.5;
@@ -65,28 +77,67 @@ export class ConflictDetector {
       }
     }
 
+    // Clear alerts involving aircraft that are now excluded from separation
+    // (landed, on ground, or on short final below 500ft AGL).  This handles
+    // alerts that were raised in a previous tick but whose aircraft have since
+    // transitioned to an excluded state.
+    const acById = new Map(aircraft.map(a => [a.id, a]));
+    for (const [key, alert] of this.activeAlerts) {
+      // Only clean up conflict-related alerts (CA, PCA, WAKE)
+      if (!key.startsWith('CA:') && !key.startsWith('PCA:') && !key.startsWith('WAKE:')) continue;
+      const anyExcluded = alert.aircraftIds.some(id => {
+        const ac = acById.get(id);
+        return ac && this.isExcludedFromSeparation(ac);
+      });
+      if (anyExcluded) {
+        this.activeAlerts.delete(key);
+      }
+    }
+
     // Check all pairs for separation violations and predicted conflicts
     for (let i = 0; i < aircraft.length; i++) {
       for (let j = i + 1; j < aircraft.length; j++) {
         const a = aircraft[i];
         const b = aircraft[j];
 
-        // Skip ground aircraft
-        if (a.onGround || b.onGround) continue;
-        // Skip aircraft that have landed or are in final
-        if (a.flightPhase === 'landed' || b.flightPhase === 'landed') continue;
+        const pairKey = [a.id, b.id].sort().join(':');
+
+        // Skip aircraft excluded from TRACON separation (landed, on ground,
+        // or on short final below 500ft AGL).  When skipping, also clean up
+        // any stale alerts that were active for this pair.
+        if (this.isExcludedFromSeparation(a) || this.isExcludedFromSeparation(b)) {
+          this.activeAlerts.delete(`CA:${pairKey}`);
+          this.activeAlerts.delete(`PCA:${pairKey}`);
+          continue;
+        }
 
         // Current separation check
         const lateralNm = haversineDistance(a.position, b.position);
         const verticalFt = Math.abs(a.altitude - b.altitude);
 
-        const pairKey = [a.id, b.id].sort().join(':');
+        // FAA ILS exception: aircraft both established on the same ILS final
+        // approach course do not require the standard 3nm/1000ft separation.
+        // They're separated by longitudinal spacing (wake turbulence rules) on
+        // the same approach path, which is handled by detectFinalApproachSpacing.
+        const bothOnSameFinal =
+          a.onLocalizer && b.onLocalizer &&
+          a.clearances.approach && b.clearances.approach &&
+          a.clearances.approach.runway === b.clearances.approach.runway;
+        if (bothOnSameFinal) {
+          // Also clean up stale alerts for this ILS pair
+          this.activeAlerts.delete(`CA:${pairKey}`);
+          this.activeAlerts.delete(`PCA:${pairKey}`);
+          continue;
+        }
 
         if (lateralNm < LATERAL_SEP_NM && verticalFt < VERTICAL_SEP_FT) {
           // Active conflict - always update with fresh distances
           const alertKey = `CA:${pairKey}`;
           const existing = this.activeAlerts.get(alertKey);
           const message = `CONFLICT ALERT: ${a.callsign} and ${b.callsign} - ${lateralNm.toFixed(1)}nm / ${verticalFt.toFixed(0)}ft`;
+
+          // Clear predicted conflict alert — the conflict is now real
+          this.activeAlerts.delete(`PCA:${pairKey}`);
 
           if (existing) {
             // Update existing alert with current distances
@@ -139,7 +190,7 @@ export class ConflictDetector {
 
       // MSAW check for each aircraft
       const ac = aircraft[i];
-      if (!ac.onGround && ac.flightPhase !== 'landed' && ac.flightPhase !== 'final' && ac.flightPhase !== 'missed') {
+      if (!ac.onGround && ac.flightPhase !== 'landed' && ac.flightPhase !== 'ground' && ac.flightPhase !== 'departure' && ac.flightPhase !== 'final' && ac.flightPhase !== 'missed') {
         const mva = DEFAULT_MVA; // Could be position-based with real data
         if (ac.altitude < mva && ac.verticalSpeed <= 0) {
           const msawKey = `MSAW:${ac.id}`;
@@ -166,6 +217,44 @@ export class ConflictDetector {
           this.activeAlerts.delete(`MSAW:${ac.id}`);
         }
       }
+
+      // Airspace exit warning: IFR aircraft approaching boundary without a handoff assigned
+      const airspaceKey = `AIRSPACE:${ac.id}`;
+      const needsHandoff = !ac.onGround
+        && ac.flightPhase !== 'landed'
+        && ac.flightPhase !== 'ground'
+        && ac.category !== 'vfr'
+        && !ac.handingOff
+        && ac.clearances.handoffFrequency === null
+        && this.airportData;
+
+      if (needsHandoff) {
+        const distToAirport = haversineDistance(ac.position, this.airportData!.position);
+        if (distToAirport > TRACON_RADIUS_NM - AIRSPACE_WARN_NM) {
+          const nmToExit = Math.max(0, TRACON_RADIUS_NM - distToAirport).toFixed(1);
+          const message = `LEAVING AIRSPACE: ${ac.callsign} ${nmToExit}nm from boundary, no handoff assigned`;
+          const existing = this.activeAlerts.get(airspaceKey);
+          if (existing) {
+            existing.message = message;
+            existing.timestamp = simTime;
+          } else {
+            const alert: Alert = {
+              id: uuid(),
+              type: 'airspace',
+              severity: 'caution',
+              aircraftIds: [ac.id],
+              message,
+              timestamp: simTime,
+            };
+            this.activeAlerts.set(airspaceKey, alert);
+            newAlerts.push(alert);
+          }
+        } else {
+          this.activeAlerts.delete(airspaceKey);
+        }
+      } else {
+        this.activeAlerts.delete(airspaceKey);
+      }
     }
 
     // Runway conflict detection and final approach spacing
@@ -190,9 +279,16 @@ export class ConflictDetector {
     for (const runway of this.airportData.runways) {
       const fieldElev = runway.elevation;
 
-      // Find aircraft on the runway (within 0.5nm of threshold, below 200ft AGL)
+      // Find aircraft occupying the runway (e.g. departures taxiing/rolling).
+      // Exclude aircraft in 'final' or 'approach' phase — they're still on the
+      // glideslope, not occupying the runway surface.  An aircraft at 0.4nm on a
+      // 3° GS is at ~130ft AGL and about to land; treating it as "on the runway"
+      // would trigger spurious go-arounds for the next aircraft in sequence.
       const onRunway = aircraft.filter(ac => {
-        if (ac.flightPhase === 'landed' || ac.onGround) return false;
+        // Landed aircraft with runwayOccupying set are blocking the runway
+        if (ac.runwayOccupying === runway.id) return true;
+        if (ac.flightPhase === 'landed' || ac.flightPhase === 'ground' || ac.onGround) return false;
+        if (ac.flightPhase === 'final' || ac.flightPhase === 'approach') return false;
         const dist = haversineDistance(ac.position, runway.threshold);
         const agl = ac.altitude - fieldElev;
         return dist < ON_RUNWAY_DIST_NM && agl < ON_RUNWAY_ALT_AGL;
@@ -250,6 +346,7 @@ export class ConflictDetector {
 
     for (const ac of aircraft) {
       if (ac.flightPhase !== 'final' && ac.flightPhase !== 'approach') continue;
+      if (ac.onGround) continue; // Already touched down, skip wake turbulence checks
       if (!ac.clearances.approach) continue;
 
       const rwyId = ac.clearances.approach.runway;
@@ -307,6 +404,16 @@ export class ConflictDetector {
             this.activeAlerts.set(alertKey, alert);
             newAlerts.push(alert);
           }
+
+          // Critical wake spacing violation: trigger automatic go-around
+          // when spacing is more than 1nm below required separation and
+          // the trailing aircraft is within 5nm of the threshold
+          if (spacing < requiredSep - 1 && follower.distanceToThreshold < 5) {
+            this.goAroundTriggers.push({
+              aircraftId: follower.aircraft.id,
+              reason: `wake turbulence - ${spacing.toFixed(1)}nm behind ${leader.aircraft.wakeCategory}`,
+            });
+          }
         } else {
           const pairKey = [leader.aircraft.id, follower.aircraft.id].sort().join(':');
           this.activeAlerts.delete(`WAKE:${pairKey}`);
@@ -315,6 +422,40 @@ export class ConflictDetector {
     }
 
     return newAlerts;
+  }
+
+  /**
+   * Returns true if an aircraft should be excluded from TRACON separation checks.
+   * Exclusions:
+   * - Aircraft on the ground or in 'landed' / 'ground' phase
+   * - Aircraft in 'final' phase below 500ft AGL (committed to landing, no
+   *   meaningful separation action is possible)
+   */
+  private isExcludedFromSeparation(ac: AircraftState): boolean {
+    if (ac.onGround) return true;
+    if (ac.flightPhase === 'landed' || ac.flightPhase === 'ground') return true;
+
+    // Aircraft handed off to tower on approach/final: tower owns separation,
+    // TRACON should not generate CA alerts for these aircraft.
+    if (ac.handingOff && (ac.flightPhase === 'final' || ac.flightPhase === 'approach')) {
+      return true;
+    }
+
+    // Aircraft on short final below 500ft AGL are committed to the runway
+    const fieldElev = this.airportData
+      ? (this.airportData.runways[0]?.elevation ?? FIELD_ELEVATION_FT)
+      : FIELD_ELEVATION_FT;
+    if (ac.flightPhase === 'final' && (ac.altitude - fieldElev) < FINAL_EXCLUDE_AGL_FT) {
+      return true;
+    }
+
+    // Aircraft not yet handed off to us (inbound from center) — center owns separation
+    if (ac.inboundHandoff === 'offered') return true;
+
+    // Departures in initial takeoff roll / early climb — too dynamic for prediction
+    if (ac.flightPhase === 'departure') return true;
+
+    return false;
   }
 
   /**

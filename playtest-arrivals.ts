@@ -10,7 +10,7 @@ import WebSocket from 'ws';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 const WS_URL = 'ws://localhost:3001';
-const SIM_DURATION_TICKS = 600; // ~10 minutes of sim time
+const SIM_DURATION_TICKS = 500; // ~8 minutes of sim time (shortened for playtest)
 const TIME_SCALE = 4;
 
 // KRIC RWY 16 approach parameters
@@ -164,9 +164,14 @@ const LOC_RECIPROCAL = 337; // approach side bearing
 const DEG = Math.PI / 180;
 
 // Minimum ticks between heading commands to the same aircraft
-const HEADING_COOLDOWN = 25;
+const HEADING_COOLDOWN = 10;
 // Minimum ticks between any commands to the same aircraft
 const CMD_COOLDOWN = 5;
+
+// Approach sequencing: time-based spacing between ILS clearances
+// Minimum ticks between consecutive approach clearances for proper spacing
+const APPROACH_SPACING_TICKS = 55; // ~55 seconds → ~2.75nm at 180kts
+let lastApproachClearanceTick = -100; // allows first clearance immediately
 
 function bearingTo(fromLat: number, fromLon: number, toLat: number, toLon: number): number {
   const dLon = (toLon - fromLon) * DEG;
@@ -228,6 +233,7 @@ function controlAircraft(ws: WebSocket, ac: Aircraft): void {
     lastCmdTick?: number;
     lastHdgTick?: number;
     lastHdgIssued?: number;
+    holdingForSequence?: boolean;
   };
 
   // Command cooldown: don't spam commands
@@ -254,37 +260,43 @@ function controlAircraft(ws: WebSocket, ac: Aircraft): void {
   }
 
   // ── Stage 1: Altitude management ──────────────────────────────────────────
-  if (ac.altitude > 7000 && !t.descendedTo6000) {
+  // Descend to 6000 if above 6100 (covers aircraft spawned at or above 7000).
+  // Previous logic used `> 7000` which skipped aircraft at exactly 7000ft,
+  // marking the stage complete without ever issuing a descent command.
+  if (ac.altitude > 6100 && !t.descendedTo6000) {
     cmd('descend and maintain 6000');
     t.descendedTo6000 = true;
     return;
   }
-  if (!t.descendedTo6000 && ac.altitude <= 7000) {
+  if (!t.descendedTo6000 && ac.altitude <= 6100) {
+    // Aircraft is already at or near 6000 — no command needed
     t.descendedTo6000 = true;
   }
 
   // ── Stage 2: Position toward approach side ────────────────────────────────
   // If not on the approach side, or too far from the centerline, vector toward
   // a point ~14nm from threshold on the extended centerline.
-  // Uses hdgCmd with longer cooldown to avoid spamming.
   if (t.descendedTo6000 && !t.vectoredBase) {
     if (!onApproachSide || absXtk > 8 || alongTrack < 8) {
       const target = pointOnCenterline(14);
       const brg = bearingTo(ac.position.lat, ac.position.lon, target.lat, target.lon);
-      hdgCmd(normalizeHdg(brg));
-      return;
+      if (hdgCmd(normalizeHdg(brg))) return;
+      return; // Still waiting for position — don't advance to later stages
     }
-    // Aircraft is now on approach side, within 8nm of centerline, 8+ nm out
     t.vectoredBase = true;
   }
 
   // ── Stage 3: Descend to approach altitude ─────────────────────────────────
-  if (t.vectoredBase && !t.descendedTo3000 && ac.altitude > 3500) {
+  // Descend to 3000 if above 3100 (covers aircraft already near 3500).
+  // Same pattern fix as Stage 1: use > 3100 instead of > 3500 so aircraft
+  // between 3100-3500ft still get the explicit descent command to 3000.
+  if (t.vectoredBase && !t.descendedTo3000 && ac.altitude > 3100) {
     cmd('descend and maintain 3000');
     t.descendedTo3000 = true;
     return;
   }
-  if (!t.descendedTo3000 && ac.altitude <= 3500) {
+  if (!t.descendedTo3000 && ac.altitude <= 3100) {
+    // Aircraft is already at or near 3000 — no command needed
     t.descendedTo3000 = true;
   }
 
@@ -296,7 +308,6 @@ function controlAircraft(ws: WebSocket, ac: Aircraft): void {
   }
 
   // ── Stage 4: Continue vectoring toward centerline if still far ────────────
-  // If xtk > 5nm, keep steering toward the centerline before giving intercept.
   if (t.descendedTo3000 && !t.interceptHeadingGiven && absXtk > 5 && onApproachSide) {
     const targetAlongTrack = Math.max(12, alongTrack);
     const target = pointOnCenterline(targetAlongTrack);
@@ -305,51 +316,80 @@ function controlAircraft(ws: WebSocket, ac: Aircraft): void {
     return;
   }
 
-  // ── Stage 5: Intercept heading ────────────────────────────────────────────
-  // Aircraft must be: on approach side, within 5nm of centerline, 8-20nm out,
-  // below 5000ft. Give a 20-30° intercept heading based on which side.
+  // ── Stage 5: Sequencing gate + Intercept heading ──────────────────────────
+  // Before giving the intercept heading, check if sequencing allows this
+  // aircraft to begin its approach. If not, hold at ~12-14nm.
+  // This prevents the old bug where aircraft got intercept headings but then
+  // had their ILS clearance blocked — they'd fly past the capture zone.
   if (t.descendedTo3000 && !t.interceptHeadingGiven
-      && ac.altitude <= 5000 && onApproachSide
-      && alongTrack > 8 && alongTrack < 20 && absXtk < 5 && absXtk > 0.5) {
-    // Intercept angle: 25° for > 3nm offset, 20° for closer
-    const interceptAngle = absXtk > 3 ? 25 : 20;
-    let interceptHdg: number;
-    if (crossTrack < 0) {
-      // Aircraft is LEFT (west) of centerline → turn RIGHT onto localizer
-      interceptHdg = LOC_COURSE - interceptAngle; // e.g. 157-25 = 132
-    } else {
-      // Aircraft is RIGHT (east) of centerline → turn LEFT onto localizer
-      interceptHdg = LOC_COURSE + interceptAngle; // e.g. 157+25 = 182
-    }
-    cmd(`fly heading ${Math.round(normalizeHdg(interceptHdg))}`);
-    t.interceptHeadingGiven = true;
-    t.interceptHeadingTick = currentTick;
-    return;
-  }
+      && ac.altitude <= 5500 && onApproachSide && alongTrack > 6) {
 
-  // ── Stage 5b: If on approach side but too close to centerline, just clear ─
-  // Aircraft right on the centerline (< 0.5nm) — skip intercept heading, just clear
-  if (t.descendedTo3000 && !t.interceptHeadingGiven && !t.clearedApproach
-      && ac.altitude <= 5000 && onApproachSide
-      && alongTrack > 8 && absXtk <= 0.5) {
-    // Already on the centerline — give localizer course heading and clear
-    cmd(`fly heading ${LOC_COURSE}`);
-    t.interceptHeadingGiven = true;
-    t.interceptHeadingTick = currentTick;
-    return;
+    const timeSinceLastClearance = currentTick - lastApproachClearanceTick;
+    const canProceed = timeSinceLastClearance >= APPROACH_SPACING_TICKS;
+
+    if (!canProceed) {
+      // HOLD: maintain position at ~12-14nm from threshold while waiting
+      t.holdingForSequence = true;
+      if (alongTrack < 9) {
+        // Too close to threshold — fly outbound (away from airport)
+        hdgCmd(normalizeHdg(LOC_RECIPROCAL)); // 337° (outbound on loc)
+      } else if (alongTrack > 17) {
+        // Drifted too far — steer back toward 12nm point on centerline
+        const target = pointOnCenterline(12);
+        const brg = bearingTo(ac.position.lat, ac.position.lon, target.lat, target.lon);
+        hdgCmd(normalizeHdg(brg));
+      } else if (absXtk > 3) {
+        // Drifted too far off centerline — steer back
+        const target = pointOnCenterline(Math.max(12, alongTrack));
+        const brg = bearingTo(ac.position.lat, ac.position.lon, target.lat, target.lon);
+        hdgCmd(normalizeHdg(brg));
+      }
+      // Otherwise maintain current heading (roughly parallel to centerline)
+      return;
+    }
+
+    // Sequencing allows it — give intercept heading now
+    t.holdingForSequence = false;
+    if (absXtk > 0.5 && absXtk < 5 && alongTrack > 8 && alongTrack < 20) {
+      const interceptAngle = absXtk > 3 ? 25 : 20;
+      let interceptHdg: number;
+      if (crossTrack < 0) {
+        interceptHdg = LOC_COURSE - interceptAngle;
+      } else {
+        interceptHdg = LOC_COURSE + interceptAngle;
+      }
+      cmd(`fly heading ${Math.round(normalizeHdg(interceptHdg))}`);
+      t.interceptHeadingGiven = true;
+      t.interceptHeadingTick = currentTick;
+      return;
+    } else if (absXtk <= 0.5 && alongTrack > 8) {
+      // Already on centerline — give localizer course heading
+      cmd(`fly heading ${LOC_COURSE}`);
+      t.interceptHeadingGiven = true;
+      t.interceptHeadingTick = currentTick;
+      return;
+    } else {
+      // Not in position yet, steer toward 12nm point
+      const target = pointOnCenterline(12);
+      const brg = bearingTo(ac.position.lat, ac.position.lon, target.lat, target.lon);
+      hdgCmd(normalizeHdg(brg));
+      return;
+    }
   }
 
   // ── Stage 6: Clear ILS approach ───────────────────────────────────────────
-  // Wait at least 3 ticks after intercept heading for the aircraft to start turning
+  // Wait at least 5 ticks after intercept heading for the aircraft to start turning.
+  // No separate sequencing check here — sequencing was handled in stage 5.
   if (t.interceptHeadingGiven && !t.clearedApproach
-      && currentTick >= (t.interceptHeadingTick || 0) + 3) {
+      && currentTick >= (t.interceptHeadingTick || 0) + 5) {
     cmd('cleared ILS runway 16 approach');
     t.clearedApproach = true;
+    lastApproachClearanceTick = currentTick;
     return;
   }
 
   // ── Stage 7: Handoff to tower ─────────────────────────────────────────────
-  // Hand off when established and close enough to land soon
+  // Hand off when established on localizer and close enough to land soon
   if (t.clearedApproach && !t.handedOff) {
     if ((ac.onLocalizer || ac.flightPhase === 'final') && distToTh < 5 && ac.altitude < 2500) {
       cmd(`contact tower ${TOWER_FREQ}`);
@@ -792,7 +832,7 @@ async function main(): Promise<void> {
     type: 'createSession',
     config: {
       airport: 'KRIC',
-      density: 'heavy',
+      density: 'moderate',
       scenarioType: 'arrivals',
       runwayConfig: { arrivalRunways: ['16'], departureRunways: ['16'] },
       weather: {

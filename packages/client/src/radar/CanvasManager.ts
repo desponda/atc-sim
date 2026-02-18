@@ -78,8 +78,10 @@ export class CanvasManager {
     this.mapLayer = new MapLayer(this.contexts[1], this.projection);
     this.targetLayer = new TargetLayer(this.contexts[2], this.projection, this.dataBlockManager);
     this.overlayLayer = new OverlayLayer(this.contexts[3]);
+    this.overlayLayer.setProjection(this.projection);
 
-    // Attach interaction to overlay canvas
+    // Wire overlay for RBL tool and attach interaction to overlay canvas
+    this.scopeInteraction.setOverlayLayer(this.overlayLayer);
     this.scopeInteraction.attach(this.canvases[3]);
   }
 
@@ -150,6 +152,16 @@ export class CanvasManager {
   /** Set history trail length */
   setHistoryTrailLength(length: number): void {
     this.targetLayer.setHistoryTrailLength(length);
+  }
+
+  /** Set velocity vector duration */
+  setVelocityVectorMinutes(minutes: number): void {
+    this.targetLayer.setVelocityVectorMinutes(minutes);
+  }
+
+  /** Set altitude filter range */
+  setAltitudeFilter(low: number, high: number): void {
+    this.targetLayer.setAltitudeFilter(low, high);
   }
 
   /** Mark static layers dirty */

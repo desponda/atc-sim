@@ -15,7 +15,10 @@ export type CommandType =
   | 'expectApproach'
   | 'expectRunway'
   | 'cancelApproach'
-  | 'resumeOwnNavigation';
+  | 'resumeOwnNavigation'
+  | 'radarHandoff'
+  | 'requestFieldSight'
+  | 'requestTrafficSight';
 
 export interface AltitudeCommand {
   type: 'altitude';
@@ -25,6 +28,8 @@ export interface AltitudeCommand {
   atFix?: string;
   /** Climb or descend */
   direction: 'climb' | 'descend';
+  /** True when phrased as "maintain X until established on the localizer/FAC" */
+  untilEstablished?: boolean;
 }
 
 export interface HeadingCommand {
@@ -99,8 +104,8 @@ export interface DescendViaSTARCommand {
 
 export interface HandoffCommand {
   type: 'handoff';
-  /** Facility to contact */
-  facility: 'tower' | 'center' | 'approach' | 'departure' | 'ground';
+  /** Facility to contact — null when only a frequency was given (resolved at execution time) */
+  facility: 'tower' | 'center' | 'approach' | 'departure' | 'ground' | null;
   /** Frequency */
   frequency: number;
 }
@@ -128,6 +133,19 @@ export interface ResumeOwnNavigationCommand {
   type: 'resumeOwnNavigation';
 }
 
+export interface RadarHandoffCommand {
+  type: 'radarHandoff';
+}
+
+export interface RequestFieldSightCommand {
+  type: 'requestFieldSight';
+}
+
+export interface RequestTrafficSightCommand {
+  type: 'requestTrafficSight';
+  trafficCallsign: string;
+}
+
 /** Union of all command types */
 export type ATCCommand =
   | AltitudeCommand
@@ -145,7 +163,10 @@ export type ATCCommand =
   | ExpectApproachCommand
   | ExpectRunwayCommand
   | CancelApproachCommand
-  | ResumeOwnNavigationCommand;
+  | ResumeOwnNavigationCommand
+  | RadarHandoffCommand
+  | RequestFieldSightCommand
+  | RequestTrafficSightCommand;
 
 /** A complete command issued by the controller */
 export interface ControllerCommand {

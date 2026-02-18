@@ -103,6 +103,16 @@ export class GameClient {
     this.send({ type: 'updateScratchPad', aircraftId, text });
   }
 
+  /** Send a radar handoff request for an aircraft */
+  sendRadarHandoff(aircraftId: string): void {
+    this.send({ type: 'radarHandoff', aircraftId });
+  }
+
+  /** Accept an inbound handoff offered by center for an arrival aircraft */
+  sendAcceptHandoff(aircraftId: string): void {
+    this.send({ type: 'acceptHandoff', aircraftId });
+  }
+
   private handleMessage(message: ServerMessage): void {
     const store = useGameStore.getState();
 
@@ -122,9 +132,10 @@ export class GameClient {
       case 'sessionInfo':
         store.setSession(message.session);
         if (message.session.status === 'lobby') {
-          // Auto-start the session once created
-          this.sessionControl('start');
+          // Show pre-flight briefing; user starts the session after reading
+          store.setShowBriefing(true);
         } else if (message.session.status === 'running') {
+          store.setShowBriefing(false);
           store.setInSession(true);
         } else if (message.session.status === 'ended') {
           store.setInSession(false);

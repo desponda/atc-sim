@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGameStore } from '../state/GameStore';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
+import { CommandRefButton } from './CommandReference';
 
 const barStyle: React.CSSProperties = {
   position: 'absolute',
@@ -71,7 +72,10 @@ function formatZuluTime(ms: number): string {
   return `${h}${m}${s}Z`;
 }
 
-export const StatusBar: React.FC = () => {
+export const StatusBar: React.FC<{ showCmdRef?: boolean; onToggleCmdRef?: () => void }> = ({
+  showCmdRef = false,
+  onToggleCmdRef,
+}) => {
   const clock = useGameStore((s) => s.clock);
   const weather = useGameStore((s) => s.weather);
   const runwayConfig = useGameStore((s) => s.runwayConfig);
@@ -91,6 +95,12 @@ export const StatusBar: React.FC = () => {
   const arrRwys = runwayConfig?.arrivalRunways.join('/') ?? '--';
   const depRwys = runwayConfig?.departureRunways.join('/') ?? '--';
   const acCount = aircraft.length;
+  // Ceiling: display in hundreds of feet AGL, or CLR if unlimited
+  const ceilingStr = weather
+    ? (weather.ceiling !== null
+        ? `BKN${String(Math.round(weather.ceiling / 100)).padStart(3, '0')}`
+        : 'CLR')
+    : '---';
 
   return (
     <div style={barStyle}>
@@ -99,6 +109,7 @@ export const StatusBar: React.FC = () => {
         {timeScale !== 1 && <span style={{ color: STARSColors.caution }}>x{timeScale}</span>}
         <span style={separatorStyle}>|</span>
         <span>WIND {windStr}</span>
+        <span style={{ color: STARSColors.caution, fontSize: STARSFonts.statusBar }}>{ceilingStr}</span>
         <span style={separatorStyle}>|</span>
         <span
           style={{ cursor: 'pointer', fontWeight: 'bold' }}
@@ -109,6 +120,8 @@ export const StatusBar: React.FC = () => {
         </span>
         <span style={separatorStyle}>|</span>
         <span>ALT {altStr}</span>
+        <span style={separatorStyle}>|</span>
+        <span>SFC–FL230</span>
       </div>
       <div style={sectionStyle}>
         <span>ARR {arrRwys}</span>
@@ -121,6 +134,9 @@ export const StatusBar: React.FC = () => {
           <span style={connectedDotStyle(connected)} />
           {connected ? 'CONNECTED' : 'OFFLINE'}
         </span>
+        {onToggleCmdRef && (
+          <CommandRefButton onToggle={onToggleCmdRef} active={showCmdRef} />
+        )}
       </div>
       {showAtis && atisText && (
         <div style={atisPopupStyle}>{atisText}</div>

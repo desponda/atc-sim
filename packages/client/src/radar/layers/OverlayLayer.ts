@@ -1,15 +1,25 @@
-import { STARSColors, STARSSizes, STARSGlow } from '../rendering/STARSTheme';
+import { STARSColors, STARSSizes, STARSGlow, STARSFonts } from '../rendering/STARSTheme';
+import { Projection } from '../rendering/Projection';
+
+/** RBL (Range/Bearing Line) measurement point */
+export interface RBLPoint {
+  screenX: number;
+  screenY: number;
+  /** Lat/lon for persistent display across pan/zoom */
+  lat: number;
+  lon: number;
+}
 
 /**
- * Layer 3: Mouse cursor crosshairs, CRT scanline overlay, and vignette effect.
- * Simulates authentic STARS CRT display characteristics including:
- * - Phosphor-glow crosshair cursor with center gap
- * - Horizontal scanline overlay (every 2px)
- * - Radial vignette for CRT brightness falloff
+ * Layer 3: Mouse cursor crosshairs, CRT scanline overlay, vignette effect, and RBL tool.
  * Redraws every frame (lightweight).
  */
 export class OverlayLayer {
   private ctx: CanvasRenderingContext2D;
+  private projection: Projection | null = null;
+
+  /** RBL measurement state: up to 2 points */
+  rblPoints: RBLPoint[] = [];
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -19,9 +29,16 @@ export class OverlayLayer {
     this.ctx = ctx;
   }
 
+  setProjection(projection: Projection): void {
+    this.projection = projection;
+  }
+
   draw(width: number, height: number, mouseX: number, mouseY: number): void {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, width, height);
+
+    // Draw RBL measurement line
+    this.drawRBL(ctx, mouseX, mouseY);
 
     // Draw crosshair cursor at mouse position with phosphor glow
     if (mouseX >= 0 && mouseY >= 0) {
@@ -76,6 +93,98 @@ export class OverlayLayer {
     // Reset shadow
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'transparent';
+  }
+
+  private drawRBL(ctx: CanvasRenderingContext2D, mouseX: number, mouseY: number): void {
+    if (this.rblPoints.length === 0) return;
+
+    // Re-project stored lat/lon points (handles pan/zoom correctly)
+    const pts: { x: number; y: number }[] = [];
+    for (const p of this.rblPoints) {
+      if (this.projection) {
+        const screen = this.projection.project({ lat: p.lat, lon: p.lon });
+        pts.push(screen);
+      } else {
+        pts.push({ x: p.screenX, y: p.screenY });
+      }
+    }
+
+    const p1 = pts[0];
+    const p2 = this.rblPoints.length === 2 ? pts[1] : { x: mouseX, y: mouseY };
+
+    // Draw line
+    ctx.strokeStyle = '#00ff00';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 4]);
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = STARSColors.glow;
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+
+    // Compute distance and bearing from lat/lon
+    if (this.projection) {
+      let lat2: number, lon2: number;
+      if (this.rblPoints.length === 2) {
+        lat2 = this.rblPoints[1].lat;
+        lon2 = this.rblPoints[1].lon;
+      } else if (mouseX >= 0 && mouseY >= 0) {
+        const pos = this.projection.screenToWorld(mouseX, mouseY);
+        lat2 = pos.lat;
+        lon2 = pos.lon;
+      } else {
+        return;
+      }
+
+      const lat1 = this.rblPoints[0].lat;
+      const lon1 = this.rblPoints[0].lon;
+      const distNm = this.haversineNm(lat1, lon1, lat2, lon2);
+      const bearing = this.bearing(lat1, lon1, lat2, lon2);
+
+      // Draw label at midpoint
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+      const label = `${distNm.toFixed(1)}nm / ${Math.round(bearing)}°`;
+      ctx.font = `11px ${STARSFonts.family}`;
+      ctx.fillStyle = '#00ff00';
+      ctx.shadowBlur = 3;
+      ctx.shadowColor = STARSColors.glow;
+      ctx.fillText(label, midX + 5, midY - 5);
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
+    }
+
+    // Draw endpoint markers
+    for (const p of pts) {
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  private haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 3440.065;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  private bearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const la1 = lat1 * Math.PI / 180;
+    const la2 = lat2 * Math.PI / 180;
+    const y = Math.sin(dLon) * Math.cos(la2);
+    const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLon);
+    return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
   }
 
   private drawScanlines(

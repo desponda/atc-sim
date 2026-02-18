@@ -1,4 +1,5 @@
-import type { ScoreMetrics, Alert } from '@atc-sim/shared';
+import type { ScoreMetrics, Alert, AircraftState, AirportData } from '@atc-sim/shared';
+import { haversineDistance } from '@atc-sim/shared';
 
 /**
  * ScoringEngine tracks controller performance metrics.
@@ -30,6 +31,21 @@ export class ScoringEngine {
   private activeViolations = new Set<string>();
   private msawIncidents = 0;
   private cleanAircraft = 0; // aircraft handled without any issues
+
+  // ---- Handoff penalty tracking (avoid double-penalizing) ----
+  /** Aircraft IDs that already received the late-tower-handoff penalty */
+  private lateTowerHandoffPenalized = new Set<string>();
+  /** Aircraft IDs that already received the missed-tower-handoff penalty */
+  private missedTowerHandoffPenalized = new Set<string>();
+  /** Aircraft IDs that already received the late-center-handoff penalty */
+  private lateCenterHandoffPenalized = new Set<string>();
+  /** Aircraft IDs that already received the missed-center-handoff penalty */
+  private missedCenterHandoffPenalized = new Set<string>();
+  /** Aircraft IDs that already received the late-inbound-accept penalty */
+  private lateInboundAcceptPenalized = new Set<string>();
+
+  /** Accumulated penalty points from handoff timing (subtracted in calculateScore) */
+  private handoffPenaltyPoints = 0;
 
   /** Record a new alert */
   recordAlert(alert: Alert): void {
@@ -78,6 +94,12 @@ export class ScoringEngine {
     this.metrics.commandsIssued++;
   }
 
+  /** Apply a point penalty for a bad command (e.g. invalid frequency) */
+  recordBadCommand(points: number): void {
+    this.metrics.overallScore = Math.max(0, this.metrics.overallScore - points);
+    this.calculateScore();
+  }
+
   /** Record an aircraft handled (arrived/departed successfully) */
   recordAircraftHandled(delaySec: number = 0): void {
     this.metrics.aircraftHandled++;
@@ -106,6 +128,105 @@ export class ScoringEngine {
     this.metrics.missedHandoffs++;
   }
 
+  /**
+   * Check handoff timing penalties. Call once per tick from SimulationEngine.
+   *
+   * Tower handoffs (arrivals):
+   *   - Late:   aircraft within 3nm of threshold on final without handingOff → -50 pts
+   *   - Missed: aircraft landed without ever handingOff                       → -100 pts
+   *
+   * Center (departure) handoffs:
+   *   - Late:   departure at FL160+ without accepted radar handoff             → -50 pts
+   *   - Missed: departure beyond 40nm without handingOff                       → -100 pts
+   *
+   * Inbound handoff acceptance:
+   *   - Late:   arrival inboundHandoff='offered' for >90s without acceptance   → -30 pts
+   */
+  checkHandoffPenalties(aircraft: AircraftState[], airportData: AirportData): void {
+    const LATE_TOWER_DIST_NM = 3;
+    const LATE_CENTER_ALT = 16000; // FL160
+    const MISSED_CENTER_DIST_NM = 40;
+    const LATE_INBOUND_ACCEPT_SECS = 90;
+
+    for (const ac of aircraft) {
+      if (ac.category === 'arrival' || ac.category === 'overflight') {
+        // ---- Tower handoff checks (arrivals on final/approach) ----
+        if (
+          (ac.flightPhase === 'final' || ac.flightPhase === 'approach') &&
+          !ac.handingOff
+        ) {
+          const runway = ac.flightPlan.runway
+            ? airportData.runways.find(r => r.id === ac.flightPlan.runway)
+            : null;
+          if (runway) {
+            const distNm = haversineDistance(ac.position, runway.threshold);
+
+            // Late tower handoff: within 3nm without being handed off
+            if (
+              distNm < LATE_TOWER_DIST_NM &&
+              !this.lateTowerHandoffPenalized.has(ac.id)
+            ) {
+              this.lateTowerHandoffPenalized.add(ac.id);
+              this.handoffPenaltyPoints += 50;
+            }
+          }
+        }
+
+        // Missed tower handoff: landed without ever handing off
+        if (
+          ac.flightPhase === 'landed' &&
+          !ac.handingOff &&
+          !this.missedTowerHandoffPenalized.has(ac.id) &&
+          !this.lateTowerHandoffPenalized.has(ac.id)
+        ) {
+          this.missedTowerHandoffPenalized.add(ac.id);
+          this.handoffPenaltyPoints += 100;
+        }
+
+        // ---- Inbound handoff acceptance check ----
+        if (
+          ac.inboundHandoff === 'offered' &&
+          ac.inboundHandoffOfferedAt !== undefined &&
+          !this.lateInboundAcceptPenalized.has(ac.id)
+        ) {
+          const elapsedSecs = (Date.now() - ac.inboundHandoffOfferedAt) / 1000;
+          if (elapsedSecs > LATE_INBOUND_ACCEPT_SECS) {
+            this.lateInboundAcceptPenalized.add(ac.id);
+            this.handoffPenaltyPoints += 30;
+          }
+        }
+      }
+
+      if (ac.category === 'departure') {
+        // ---- Center handoff checks ----
+
+        // Late center handoff: at FL160+ without accepted radar handoff
+        if (
+          ac.altitude >= LATE_CENTER_ALT &&
+          ac.radarHandoffState !== 'accepted' &&
+          !ac.handingOff &&
+          !this.lateCenterHandoffPenalized.has(ac.id)
+        ) {
+          this.lateCenterHandoffPenalized.add(ac.id);
+          this.handoffPenaltyPoints += 50;
+        }
+
+        // Missed center handoff: beyond 40nm without handingOff
+        if (
+          !ac.handingOff &&
+          !this.missedCenterHandoffPenalized.has(ac.id) &&
+          !this.lateCenterHandoffPenalized.has(ac.id)
+        ) {
+          const distNm = haversineDistance(ac.position, airportData.position);
+          if (distNm > MISSED_CENTER_DIST_NM) {
+            this.missedCenterHandoffPenalized.add(ac.id);
+            this.handoffPenaltyPoints += 100;
+          }
+        }
+      }
+    }
+  }
+
   private calculateScore(): void {
     let score = 100;
 
@@ -127,6 +248,9 @@ export class ScoringEngine {
 
     // +1 per aircraft handled cleanly (no issues)
     score += this.cleanAircraft * 1;
+
+    // Handoff timing penalties (late/missed tower, center, inbound accept)
+    score -= this.handoffPenaltyPoints;
 
     this.metrics.overallScore = Math.max(0, Math.min(100, Math.round(score)));
     this.metrics.grade = this.gradeFromScore(this.metrics.overallScore);
@@ -165,5 +289,11 @@ export class ScoringEngine {
     this.activeViolations.clear();
     this.msawIncidents = 0;
     this.cleanAircraft = 0;
+    this.handoffPenaltyPoints = 0;
+    this.lateTowerHandoffPenalized.clear();
+    this.missedTowerHandoffPenalized.clear();
+    this.lateCenterHandoffPenalized.clear();
+    this.missedCenterHandoffPenalized.clear();
+    this.lateInboundAcceptPenalized.clear();
   }
 }

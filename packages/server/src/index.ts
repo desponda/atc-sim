@@ -212,6 +212,54 @@ function handleClientMessage(ws: WebSocket, msg: ClientMessage): void {
       engine.updateScratchPad(msg.aircraftId, msg.text);
       break;
     }
+
+    case 'radarHandoff': {
+      const sessionId = clientSessions.get(ws);
+      if (!sessionId) {
+        sendMessage(ws, { type: 'error', message: 'No session' });
+        return;
+      }
+
+      const engine = sessionManager.getEngine(sessionId);
+      if (!engine) {
+        sendMessage(ws, { type: 'error', message: 'Session not found' });
+        return;
+      }
+
+      const result = engine.processRadarHandoff(msg.aircraftId);
+      sendMessage(ws, {
+        type: 'commandResponse',
+        success: result.success,
+        callsign: result.callsign,
+        rawText: 'radar handoff',
+        error: result.error,
+      });
+      break;
+    }
+
+    case 'acceptHandoff': {
+      const sessionId = clientSessions.get(ws);
+      if (!sessionId) {
+        sendMessage(ws, { type: 'error', message: 'No session' });
+        return;
+      }
+
+      const engine = sessionManager.getEngine(sessionId);
+      if (!engine) {
+        sendMessage(ws, { type: 'error', message: 'Session not found' });
+        return;
+      }
+
+      const result = engine.processAcceptHandoff(msg.aircraftId);
+      sendMessage(ws, {
+        type: 'commandResponse',
+        success: result.success,
+        callsign: result.callsign,
+        rawText: 'acceptHandoff',
+        error: result.error,
+      });
+      break;
+    }
   }
 }
 

@@ -82,8 +82,20 @@ export interface UpdateScratchPadMessage {
   text: string;
 }
 
+export interface RadarHandoffMessage {
+  type: 'radarHandoff';
+  aircraftId: string;
+}
+
+export interface AcceptHandoffMessage {
+  type: 'acceptHandoff';
+  aircraftId: string;
+}
+
 export type ClientMessage =
   | CommandMessage
   | CreateSessionMessage
   | SessionControlMessage
-  | UpdateScratchPadMessage;
+  | UpdateScratchPadMessage
+  | RadarHandoffMessage
+  | AcceptHandoffMessage;

@@ -66,8 +66,8 @@ export class Projection {
     // Adjust pan so the point under cursor stays fixed
     const projBefore = stereographicProject(worldBefore, this.center);
     const projAfter = stereographicProject(worldAfter, this.center);
-    this.panOffsetNm.x += projAfter.x - projBefore.x;
-    this.panOffsetNm.y += projAfter.y - projBefore.y;
+    this.panOffsetNm.x += projBefore.x - projAfter.x;
+    this.panOffsetNm.y += projBefore.y - projAfter.y;
   }
 
   /** Reset pan to centered */

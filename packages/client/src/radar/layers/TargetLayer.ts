@@ -18,6 +18,7 @@ export class TargetLayer {
   private alertAircraftIds = new Set<string>();
   private cautionAircraftIds = new Set<string>();
   private historyTrailLength = 5;
+  private velocityVectorMinutes = 1; // 0 = off, 1 or 2
 
   constructor(
     ctx: CanvasRenderingContext2D,
@@ -43,6 +44,10 @@ export class TargetLayer {
     this.historyTrailLength = Math.max(0, Math.min(10, length));
   }
 
+  setVelocityVectorMinutes(minutes: number): void {
+    this.velocityVectorMinutes = Math.max(0, Math.min(2, minutes));
+  }
+
   updateAlerts(alerts: Alert[]): void {
     this.alertAircraftIds.clear();
     this.cautionAircraftIds.clear();
@@ -55,6 +60,13 @@ export class TargetLayer {
   }
 
   private frameCount = 0;
+  private altFilterLow = 0;
+  private altFilterHigh = 99900;
+
+  setAltitudeFilter(low: number, high: number): void {
+    this.altFilterLow = low;
+    this.altFilterHigh = high;
+  }
 
   draw(width: number, height: number, aircraft: AircraftState[]): void {
     const ctx = this.ctx;
@@ -66,6 +78,10 @@ export class TargetLayer {
 
     for (const ac of aircraft) {
       if (ac.onGround && ac.flightPhase === 'landed') continue;
+
+      // Altitude filter: hide aircraft outside the filter range
+      if (ac.altitude < this.altFilterLow || ac.altitude > this.altFilterHigh) continue;
+
       activeIds.add(ac.id);
 
       const targetPos = this.projection.project(ac.position);
@@ -73,10 +89,38 @@ export class TargetLayer {
       // Draw history trail
       this.drawHistoryTrail(ac, targetPos);
 
-      // Determine color (coast targets are gray)
-      const color = ac.handingOff
-        ? STARSColors.coast
-        : this.getAircraftColor(ac.id);
+      // Determine color with flashing for alerts
+      const isAlert = this.alertAircraftIds.has(ac.id);
+      const isCaution = this.cautionAircraftIds.has(ac.id);
+      const flashOn = Math.floor(Date.now() / 250) % 2 === 0;
+
+      let color: string;
+      if (ac.inboundHandoff === 'offered') {
+        // Center is offering this arrival to us — amber flash, distinct from outbound
+        color = Math.floor(Date.now() / 500) % 2 === 0 ? STARSColors.inboundHandoffOffered : STARSColors.inboundHandoffOfferedDim;
+      } else if (ac.inboundHandoff === 'accepted') {
+        // Controller accepted, aircraft checking in — brief gray
+        color = STARSColors.inboundHandoffAccepted;
+      } else if (ac.handingOff) {
+        color = STARSColors.coast;
+      } else if (ac.radarHandoffState === 'offered') {
+        color = Math.floor(Date.now() / 500) % 2 === 0 ? STARSColors.handoffOffered : STARSColors.handoffOfferedDim;
+      } else if (ac.radarHandoffState === 'accepted') {
+        color = STARSColors.handoffAccepted;
+      } else if (isAlert) {
+        color = flashOn ? STARSColors.alert : STARSColors.alertDim;
+      } else if (isCaution) {
+        color = flashOn ? STARSColors.caution : STARSColors.cautionDim;
+      } else if (ac.id === this.selectedAircraftId) {
+        color = STARSColors.selected;
+      } else {
+        color = STARSColors.normal;
+      }
+
+      // Draw velocity vector (predicted track line)
+      if (this.velocityVectorMinutes > 0 && ac.groundspeed > 50) {
+        this.drawVelocityVector(ac, targetPos, color);
+      }
 
       // Draw primary target (filled square)
       this.drawTarget(targetPos.x, targetPos.y, color);
@@ -89,11 +133,35 @@ export class TargetLayer {
     this.dataBlockManager.cleanup(activeIds);
   }
 
-  private getAircraftColor(id: string): string {
-    if (this.alertAircraftIds.has(id)) return STARSColors.alert;
-    if (this.cautionAircraftIds.has(id)) return STARSColors.caution;
-    if (id === this.selectedAircraftId) return STARSColors.selected;
-    return STARSColors.normal;
+  private drawVelocityVector(
+    ac: AircraftState,
+    targetPos: { x: number; y: number },
+    color: string
+  ): void {
+    const ctx = this.ctx;
+    // Project position forward by N minutes using heading + groundspeed
+    const seconds = this.velocityVectorMinutes * 60;
+    const distNm = (ac.groundspeed / 3600) * seconds;
+    const headingRad = (ac.heading * Math.PI) / 180;
+
+    // Approximate lat/lon offset (good enough for display)
+    const dLat = (distNm / 60) * Math.cos(headingRad);
+    const dLon = (distNm / 60) * Math.sin(headingRad) / Math.cos((ac.position.lat * Math.PI) / 180);
+    const futurePos = this.projection.project({
+      lat: ac.position.lat + dLat,
+      lon: ac.position.lon + dLon,
+    });
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.6;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(targetPos.x, targetPos.y);
+    ctx.lineTo(futurePos.x, futurePos.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
   }
 
   private drawTarget(x: number, y: number, color: string): void {
@@ -147,11 +215,26 @@ export class TargetLayer {
     const ctx = this.ctx;
 
     // Build STARS Full Data Block lines
-    // Line 1: Callsign + handoff indicator
-    const handoffIndicator = ac.handingOff
-      ? (this.frameCount % 2 === 0 ? ' H' : '  ') // Flashing "H"
-      : '';
-    const line1 = ac.callsign + handoffIndicator;
+    // Line 1: Callsign — no "H" indicator; handed-off aircraft just go gray
+    const handoffIndicator = '';
+
+    // Inbound handoff markers take priority over outbound radar handoff markers
+    let radarHandoffMarker: string;
+    if (ac.inboundHandoff === 'offered') {
+      // Caret suffix indicates inbound offer from center (flashes with the color)
+      radarHandoffMarker = Math.floor(Date.now() / 500) % 2 === 0 ? '^' : '';
+    } else if (ac.inboundHandoff === 'accepted') {
+      // No suffix during check-in transition
+      radarHandoffMarker = '';
+    } else if (ac.radarHandoffState === 'accepted') {
+      radarHandoffMarker = 'J';
+    } else if (ac.radarHandoffState === 'offered') {
+      radarHandoffMarker = Math.floor(Date.now() / 500) % 2 === 0 ? '*' : '';
+    } else {
+      radarHandoffMarker = '';
+    }
+
+    const line1 = ac.callsign + handoffIndicator + (radarHandoffMarker ? ` ${radarHandoffMarker}` : '');
     // Line 2: Type + vertical trend arrow + CURRENT altitude + assigned altitude
     // Real STARS shows assigned altitude when it differs from current
     const climbArrow = ac.verticalSpeed > 200 ? '\u2191' : ac.verticalSpeed < -200 ? '\u2193' : ' ';
