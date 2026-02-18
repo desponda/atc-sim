@@ -132,27 +132,42 @@ export class ScoringEngine {
    * Check handoff timing penalties. Call once per tick from SimulationEngine.
    *
    * Tower handoffs (arrivals):
-   *   - Late:   aircraft within 3nm of threshold on final without handingOff → -50 pts
-   *   - Missed: aircraft landed without ever handingOff                       → -100 pts
+   *   - Late:   aircraft within 2nm of threshold on final without handingOff → -5 pts
+   *   - Missed: aircraft landed without ever handingOff                       → -10 pts
    *
    * Center (departure) handoffs:
-   *   - Late:   departure at FL160+ without accepted radar handoff             → -50 pts
-   *   - Missed: departure beyond 40nm without handingOff                       → -100 pts
+   *   - Late:   departure at FL180+ without accepted radar handoff             → -5 pts
+   *   - Missed: departure beyond 40nm without handingOff                       → -10 pts
    *
    * Inbound handoff acceptance:
-   *   - Late:   arrival inboundHandoff='offered' for >90s without acceptance   → -30 pts
+   *   - Late:   arrival inboundHandoff='offered' for >120s without acceptance  → -3 pts
+   *
+   * Grace period: skip checks if the inbound handoff was just offered
+   * (controller needs time to notice and accept before penalties apply).
    */
-  checkHandoffPenalties(aircraft: AircraftState[], airportData: AirportData): void {
-    const LATE_TOWER_DIST_NM = 3;
-    const LATE_CENTER_ALT = 16000; // FL160
+  checkHandoffPenalties(aircraft: AircraftState[], airportData: AirportData, currentTick: number): void {
+    const LATE_TOWER_DIST_NM = 2;
+    const LATE_CENTER_ALT = 18000; // FL180
     const MISSED_CENTER_DIST_NM = 40;
-    const LATE_INBOUND_ACCEPT_SECS = 90;
+    // Ticks until a late-accept penalty can apply (each tick = 1 sim-second)
+    const LATE_INBOUND_ACCEPT_TICKS = 180; // 3 sim-minutes
+    // Grace period: don't check tower/departure penalties until aircraft has been
+    // tracked for at least this many sim ticks
+    const SPAWN_GRACE_TICKS = 90; // 90 sim-seconds
 
     for (const ac of aircraft) {
       if (ac.category === 'arrival' || ac.category === 'overflight') {
-        // ---- Tower handoff checks (arrivals on final/approach) ----
+        // Respect spawn grace: skip if inbound was offered very recently (tick-based)
+        const inboundAgeTicks = ac.inboundHandoffOfferedAt !== undefined
+          ? currentTick - ac.inboundHandoffOfferedAt
+          : Infinity;
+        const pastGrace = inboundAgeTicks >= SPAWN_GRACE_TICKS;
+
+        // ---- Tower handoff checks (arrivals on final only) ----
         if (
-          (ac.flightPhase === 'final' || ac.flightPhase === 'approach') &&
+          pastGrace &&
+          ac.flightPhase === 'final' &&
+          ac.inboundHandoff === 'accepted' && // must have accepted inbound first
           !ac.handingOff
         ) {
           const runway = ac.flightPlan.runway
@@ -161,26 +176,27 @@ export class ScoringEngine {
           if (runway) {
             const distNm = haversineDistance(ac.position, runway.threshold);
 
-            // Late tower handoff: within 3nm without being handed off
+            // Late tower handoff: within 2nm on final without handing off
             if (
               distNm < LATE_TOWER_DIST_NM &&
               !this.lateTowerHandoffPenalized.has(ac.id)
             ) {
               this.lateTowerHandoffPenalized.add(ac.id);
-              this.handoffPenaltyPoints += 50;
+              this.handoffPenaltyPoints += 5;
             }
           }
         }
 
         // Missed tower handoff: landed without ever handing off
         if (
+          pastGrace &&
           ac.flightPhase === 'landed' &&
           !ac.handingOff &&
           !this.missedTowerHandoffPenalized.has(ac.id) &&
           !this.lateTowerHandoffPenalized.has(ac.id)
         ) {
           this.missedTowerHandoffPenalized.add(ac.id);
-          this.handoffPenaltyPoints += 100;
+          this.handoffPenaltyPoints += 10;
         }
 
         // ---- Inbound handoff acceptance check ----
@@ -189,18 +205,19 @@ export class ScoringEngine {
           ac.inboundHandoffOfferedAt !== undefined &&
           !this.lateInboundAcceptPenalized.has(ac.id)
         ) {
-          const elapsedSecs = (Date.now() - ac.inboundHandoffOfferedAt) / 1000;
-          if (elapsedSecs > LATE_INBOUND_ACCEPT_SECS) {
+          if (inboundAgeTicks > LATE_INBOUND_ACCEPT_TICKS) {
             this.lateInboundAcceptPenalized.add(ac.id);
-            this.handoffPenaltyPoints += 30;
+            this.handoffPenaltyPoints += 3;
           }
         }
       }
 
       if (ac.category === 'departure') {
-        // ---- Center handoff checks ----
+        // Grace period: skip if departure hasn't been airborne long enough
+        // Use inboundHandoffOfferedAt as proxy, or skip if on ground
+        if (ac.onGround) continue;
 
-        // Late center handoff: at FL160+ without accepted radar handoff
+        // Late center handoff: at FL180+ without accepted radar handoff
         if (
           ac.altitude >= LATE_CENTER_ALT &&
           ac.radarHandoffState !== 'accepted' &&
@@ -208,7 +225,7 @@ export class ScoringEngine {
           !this.lateCenterHandoffPenalized.has(ac.id)
         ) {
           this.lateCenterHandoffPenalized.add(ac.id);
-          this.handoffPenaltyPoints += 50;
+          this.handoffPenaltyPoints += 5;
         }
 
         // Missed center handoff: beyond 40nm without handingOff
@@ -220,7 +237,7 @@ export class ScoringEngine {
           const distNm = haversineDistance(ac.position, airportData.position);
           if (distNm > MISSED_CENTER_DIST_NM) {
             this.missedCenterHandoffPenalized.add(ac.id);
-            this.handoffPenaltyPoints += 100;
+            this.handoffPenaltyPoints += 10;
           }
         }
       }

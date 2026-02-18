@@ -101,6 +101,7 @@ export class ScenarioGenerator {
   private lastSpawnTick = 0;
   private lastDepartureTick = -9999; // far in the past so first departure spawns freely
   private usedCallsigns = new Set<string>();
+  private currentTick = 0; // updated at start of update(); used by spawn helpers
   private totalSpawned = 0;
   private vfrCounter = 0;
 
@@ -120,6 +121,7 @@ export class ScenarioGenerator {
    * that higher time-scale values produce proportionally more traffic per tick.
    */
   update(tickCount: number, timeScale: number): AircraftState | null {
+    this.currentTick = tickCount;
     const warmupCount = WARM_UP_COUNT[this.config.density] ?? 3;
     const warmupIntervalSecs = WARM_UP_INTERVAL_SECS[this.config.density] ?? 50;
     const opsPerHour = DENSITY_OPS[this.config.density] || 16;
@@ -248,7 +250,7 @@ export class ScenarioGenerator {
     // Center pre-offers handoff for all arrivals — controller must accept
     // before the aircraft checks in on approach frequency.
     ac.inboundHandoff = 'offered';
-    ac.inboundHandoffOfferedAt = Date.now();
+    ac.inboundHandoffOfferedAt = this.currentTick;
 
     return ac;
   }
@@ -316,7 +318,7 @@ export class ScenarioGenerator {
     // Center pre-offers handoff for all arrivals — controller must accept
     // before the aircraft checks in on approach frequency.
     ac.inboundHandoff = 'offered';
-    ac.inboundHandoffOfferedAt = Date.now();
+    ac.inboundHandoffOfferedAt = this.currentTick;
 
     return ac;
   }
@@ -375,7 +377,7 @@ export class ScenarioGenerator {
     // Center pre-offers handoff for all arrivals — controller must accept
     // before the aircraft checks in on approach frequency.
     ac.inboundHandoff = 'offered';
-    ac.inboundHandoffOfferedAt = Date.now();
+    ac.inboundHandoffOfferedAt = this.currentTick;
 
     return ac;
   }

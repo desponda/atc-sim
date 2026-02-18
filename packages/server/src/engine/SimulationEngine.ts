@@ -577,7 +577,8 @@ export class SimulationEngine {
     // 5b. Check handoff timing penalties (tower, center, inbound acceptance)
     this.scoringEngine.checkHandoffPenalties(
       this.aircraftManager.getAll(),
-      this.airportData
+      this.airportData,
+      this.clock.tickCount
     );
 
     // 6. Update scoring

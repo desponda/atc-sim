@@ -10,7 +10,6 @@ import { CommPanel } from './ui/CommPanel';
 import { CommandInput } from './ui/CommandInput';
 import { FlightStripPanel } from './ui/FlightStripPanel';
 import { CommandReference, CommandRefButton } from './ui/CommandReference';
-import { EventLog } from './ui/EventLog';
 import {
   unlockAudio,
   playNewStrip,
@@ -124,6 +123,7 @@ const EventLogger: React.FC = () => {
   const prevViolations = useRef(score?.separationViolations ?? 0);
   const prevConflictAlerts = useRef(score?.conflictAlerts ?? 0);
   const prevMissedHandoffs = useRef(score?.missedHandoffs ?? 0);
+  const prevScore = useRef(score?.overallScore ?? 100);
 
   // New alerts
   useEffect(() => {
@@ -147,22 +147,27 @@ const EventLogger: React.FC = () => {
     prevAlertIds.current = new Set(alerts.map((a) => a.id));
   }, [alerts, addEventLogEntry]);
 
-  // Score deductions
+  // Score deductions — watch both named counters and overall score for
+  // catch-all on handoff timing penalties (which don't have their own counter)
   useEffect(() => {
     if (!score) return;
+
+    const now = Date.now();
+    const scoreDrop = prevScore.current - score.overallScore;
+
     if (score.separationViolations > prevViolations.current) {
       addEventLogEntry({
-        id: `sep-${Date.now()}`,
-        timestamp: Date.now(),
+        id: `sep-${now}`,
+        timestamp: now,
         type: 'score',
-        message: `Separation violation — score penalty`,
+        message: `Separation violation — −5 pts`,
         severity: 'warning',
       });
     }
     if (score.missedHandoffs > prevMissedHandoffs.current) {
       addEventLogEntry({
-        id: `ho-${Date.now()}`,
-        timestamp: Date.now(),
+        id: `ho-${now}`,
+        timestamp: now,
         type: 'handoff',
         message: `Missed handoff — score penalty`,
         severity: 'caution',
@@ -170,16 +175,34 @@ const EventLogger: React.FC = () => {
     }
     if (score.conflictAlerts > prevConflictAlerts.current) {
       addEventLogEntry({
-        id: `ca-score-${Date.now()}`,
-        timestamp: Date.now(),
+        id: `ca-score-${now}`,
+        timestamp: now,
         type: 'score',
-        message: `Conflict alert triggered — score penalty`,
+        message: `Conflict alert — score penalty`,
         severity: 'caution',
       });
     }
+    // Catch handoff timing penalties (late tower/center/inbound accept)
+    // that don't have dedicated counters — detect as unexpected score drop
+    if (
+      scoreDrop > 0 &&
+      score.separationViolations === prevViolations.current &&
+      score.missedHandoffs === prevMissedHandoffs.current &&
+      score.conflictAlerts === prevConflictAlerts.current
+    ) {
+      addEventLogEntry({
+        id: `ho-timing-${now}`,
+        timestamp: now,
+        type: 'handoff',
+        message: `Late/missed handoff — −${scoreDrop} pts`,
+        severity: 'caution',
+      });
+    }
+
     prevViolations.current = score.separationViolations;
     prevMissedHandoffs.current = score.missedHandoffs;
     prevConflictAlerts.current = score.conflictAlerts;
+    prevScore.current = score.overallScore;
   }, [score, addEventLogEntry]);
 
   return null;
@@ -242,7 +265,6 @@ export const App: React.FC = () => {
       <RadarScope />
       <FlightStripPanel />
       <CommPanel />
-      <EventLog />
       <CommandInput />
       {showCmdRef && <CommandReference onClose={() => setShowCmdRef(false)} />}
     </div>

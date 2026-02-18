@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { useGameStore } from '../state/GameStore';
+import { useGameStore, type EventLogEntry } from '../state/GameStore';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
 
 const panelStyle: React.CSSProperties = {
@@ -67,17 +67,45 @@ function formatLogTime(ms: number): string {
   return `${h}:${m}:${s}`;
 }
 
+function eventColor(entry: EventLogEntry): string {
+  if (entry.severity === 'warning') return '#ff4444';
+  if (entry.severity === 'caution') return '#ffaa00';
+  return '#8899aa';
+}
+
+function eventTag(entry: EventLogEntry): string {
+  switch (entry.type) {
+    case 'conflict': return 'CA';
+    case 'msaw':     return 'MSAW';
+    case 'runway':   return 'RWY';
+    case 'wake':     return 'WAKE';
+    case 'score':    return 'SCORE';
+    case 'handoff':  return 'HO';
+    default:         return 'INFO';
+  }
+}
+
 export const CommPanel: React.FC = () => {
   const radioLog = useGameStore((s) => s.radioLog);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const eventLog = useGameStore((s) => s.eventLog);
+  const commBottomRef = useRef<HTMLDivElement>(null);
+  const eventBottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll comm log to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    commBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [radioLog.length]);
+
+  // Auto-scroll event log to bottom on new events
+  useEffect(() => {
+    eventBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [eventLog.length]);
+
+  const recentEvents = eventLog.slice(-20);
 
   return (
     <div style={panelStyle}>
+      {/* Comm Log — takes all remaining space */}
       <div style={headerStyle}>Comm Log</div>
       <div style={logStyle}>
         {radioLog.map((msg) => {
@@ -93,8 +121,64 @@ export const CommPanel: React.FC = () => {
             </div>
           );
         })}
-        <div ref={bottomRef} />
+        <div ref={commBottomRef} />
       </div>
+
+      {/* Event Log — fixed height at the bottom, always visible */}
+      <div style={{
+        borderTop: `1px solid ${STARSColors.panelBorder}`,
+        background: '#020802',
+        flexShrink: 0,
+      }}>
+        <div style={{
+          ...headerStyle,
+          borderBottom: `1px solid ${STARSColors.panelBorder}`,
+          color: '#446644',
+        }}>
+          Event Log
+        </div>
+        <div style={{
+          height: 148,
+          overflowY: 'auto',
+          padding: '2px 0',
+          fontSize: 10,
+          fontFamily: STARSFonts.family,
+        }}>
+          {recentEvents.length === 0 ? (
+            <div style={{ padding: '6px 8px', color: '#2a3a2a', fontStyle: 'italic', fontSize: 10 }}>
+              No events
+            </div>
+          ) : (
+            recentEvents.map((entry, idx) => {
+              const color = eventColor(entry);
+              const age = recentEvents.length - 1 - idx;
+              const opacity = Math.max(0.4, 1 - age * 0.05);
+              return (
+                <div key={entry.id} style={{
+                  display: 'flex',
+                  gap: 5,
+                  padding: '2px 6px',
+                  lineHeight: '15px',
+                  opacity,
+                  borderBottom: `1px solid rgba(30,50,30,0.3)`,
+                }}>
+                  <span style={{ color: '#334433', fontSize: 9, whiteSpace: 'nowrap', alignSelf: 'center', minWidth: 44 }}>
+                    {formatLogTime(entry.timestamp)}
+                  </span>
+                  <span style={{ color, fontWeight: 'bold', fontSize: 10, whiteSpace: 'nowrap', minWidth: 34 }}>
+                    {eventTag(entry)}
+                  </span>
+                  <span style={{ color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {entry.message}
+                  </span>
+                </div>
+              );
+            })
+          )}
+          <div ref={eventBottomRef} />
+        </div>
+      </div>
+
       <style>{`
         div::-webkit-scrollbar {
           width: 6px;

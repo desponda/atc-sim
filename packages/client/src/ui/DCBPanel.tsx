@@ -56,6 +56,22 @@ const buttonStyle = (active: boolean): React.CSSProperties => ({
 const RANGE_OPTIONS = [5, 10, 20, 30, 40, 60];
 const TRAIL_OPTIONS = [0, 1, 3, 5, 7, 10];
 
+/** Compact two-column row: cyan command + dim description */
+const CmdLine: React.FC<{ cmd: string; desc: string }> = ({ cmd, desc }) => (
+  <div style={{ display: 'flex', gap: 4, alignItems: 'baseline' }}>
+    <span style={{ color: '#00cccc', minWidth: 78, flexShrink: 0 }}>{cmd}</span>
+    <span style={{ color: '#445544' }}>{desc}</span>
+  </div>
+);
+
+function gradeColor(grade: string): string {
+  if (grade === 'A+' || grade === 'A') return '#00ff88';
+  if (grade === 'B') return '#88ff00';
+  if (grade === 'C') return '#ffff00';
+  if (grade === 'D') return '#ffaa00';
+  return '#ff3333'; // F
+}
+
 export const DCBPanel: React.FC = () => {
   const scopeSettings = useGameStore((s) => s.scopeSettings);
   const setScopeSettings = useGameStore((s) => s.setScopeSettings);
@@ -72,6 +88,41 @@ export const DCBPanel: React.FC = () => {
 
   return (
     <div style={panelStyle}>
+      {/* Score — prominent, top of panel */}
+      {score && (
+        <div style={{ ...sectionStyle, background: '#030b03', padding: '8px 8px 6px' }}>
+          <div style={labelStyle}>SCORE</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              fontSize: 36,
+              fontWeight: 'bold',
+              color: gradeColor(score.grade),
+              textShadow: `0 0 10px ${gradeColor(score.grade)}66`,
+              lineHeight: 1,
+              minWidth: 28,
+            }}>
+              {score.grade}
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1, fontSize: 11 }}>
+              <span style={{ color: STARSColors.normal, fontWeight: 'bold' }}>{score.overallScore} pts</span>
+              <span style={{ color: STARSColors.dimText, fontSize: 9 }}>
+                AC: {score.aircraftHandled} · CMD: {score.commandsIssued}
+              </span>
+            </div>
+          </div>
+          {(score.separationViolations > 0 || score.missedHandoffs > 0) && (
+            <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 1, fontSize: 9 }}>
+              {score.separationViolations > 0 && (
+                <span style={{ color: STARSColors.alert }}>SEP VIO: {score.separationViolations}</span>
+              )}
+              {score.missedHandoffs > 0 && (
+                <span style={{ color: STARSColors.caution }}>MISSED HO: {score.missedHandoffs}</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Range */}
       <div style={sectionStyle}>
         <div style={labelStyle}>RANGE (NM)</div>
@@ -216,41 +267,56 @@ export const DCBPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Score display */}
-      {score && (
-        <div style={sectionStyle}>
-          <div style={labelStyle}>SCORE</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, fontSize: 9 }}>
-            <span>
-              GRADE:{' '}
-              <span style={{ color: score.grade === 'A' ? STARSColors.normal : score.grade === 'F' ? STARSColors.alert : STARSColors.caution }}>
-                {score.grade}
-              </span>
-            </span>
-            <span>SCORE: {score.overallScore}</span>
-            <span>SEP VIO: {score.separationViolations}</span>
-            <span>AC: {score.aircraftHandled}</span>
-            <span>CMDS: {score.commandsIssued}</span>
-          </div>
-        </div>
-      )}
 
-      {/* Commands reference */}
-      <div style={{ ...sectionStyle, flex: 1, overflow: 'auto' }}>
-        <div style={labelStyle}>COMMANDS</div>
-        <div style={{ color: STARSColors.dimText, fontSize: 9, lineHeight: 1.5 }}>
-          H/HDG nnn [L/R]<br />
-          C/CLB nnn<br />
-          D/DES nnn<br />
-          S/SPD nnn|NORM<br />
-          DIR fix<br />
-          APP ILS/RNAV rwy<br />
-          HO freq<br />
-          GA - Go Around<br />
-          CVS - Climb via SID<br />
-          DVS - Descend via STAR<br />
-          RON - Resume nav<br />
-          CA - Cancel approach
+      {/* Commands quick reference */}
+      <div style={{ ...sectionStyle, flex: 1, overflow: 'auto', padding: '6px 8px' }}>
+        <div style={labelStyle}>QUICK REF  <span style={{ color: '#333', fontWeight: 'normal' }}>press ? for full</span></div>
+        <div style={{ fontSize: 9, lineHeight: 1.7 }}>
+          {/* Altitude */}
+          <div style={{ color: '#00cc88', marginTop: 2, marginBottom: 1, letterSpacing: 1 }}>ALT</div>
+          <CmdLine cmd="cm 18000" desc="climb & maint" />
+          <CmdLine cmd="dm 8000"  desc="descend & maint" />
+          <CmdLine cmd="m 5000"   desc="maintain" />
+          <CmdLine cmd="cvs"      desc="climb via SID" />
+          <CmdLine cmd="dvs"      desc="descend via STAR" />
+
+          {/* Heading */}
+          <div style={{ color: '#00cccc', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>HDG</div>
+          <CmdLine cmd="fh 270"   desc="fly heading" />
+          <CmdLine cmd="tlh 210"  desc="turn left hdg" />
+          <CmdLine cmd="trh 090"  desc="turn right hdg" />
+
+          {/* Speed */}
+          <div style={{ color: '#ccaa00', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>SPD</div>
+          <CmdLine cmd="s 180"    desc="assign speed" />
+          <CmdLine cmd="s 0"      desc="resume normal" />
+
+          {/* Approach */}
+          <div style={{ color: '#ffbb00', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>APPR</div>
+          <CmdLine cmd="ci16"     desc="cleared ILS 16" />
+          <CmdLine cmd="int 16"   desc="intercept loc 16" />
+          <CmdLine cmd="cr16"     desc="cleared RNAV 16" />
+          <CmdLine cmd="rfs"      desc="report field in sight" />
+          <CmdLine cmd="cv16"     desc="cleared visual 16" />
+          <CmdLine cmd="ga"       desc="go around" />
+
+          {/* Nav */}
+          <div style={{ color: '#88bbff', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>NAV</div>
+          <CmdLine cmd="pd FIX"   desc="proceed direct" />
+          <CmdLine cmd="hold FIX" desc="hold at fix" />
+          <CmdLine cmd="ron"      desc="resume own nav" />
+          <CmdLine cmd="ca"       desc="cancel approach" />
+
+          {/* Handoff */}
+          <div style={{ color: '#ff8844', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>HO</div>
+          <CmdLine cmd=".ho"       desc="handoff (or Ctrl+↓)" />
+          <CmdLine cmd="rts CALL"  desc="report traffic in sight" />
+
+          {/* Chain */}
+          <div style={{ color: '#cc88ff', marginTop: 4, marginBottom: 1, letterSpacing: 1 }}>CHAIN  (comma-sep)</div>
+          <CmdLine cmd="fh 180, dm 5000"  desc="hdg + descend" />
+          <CmdLine cmd="dm 8000, s 200"   desc="descend + speed" />
+          <CmdLine cmd="cm 18000, .ho"    desc="climb + handoff" />
         </div>
       </div>
     </div>

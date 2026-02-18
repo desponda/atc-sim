@@ -379,7 +379,12 @@ export class PilotAI {
       const hasSight = ac.visualSight?.state === 'fieldSighted' || ac.visualSight?.state === 'trafficSighted';
       if (hasSight) continue;
 
-      const sightResult = this.canPilotSeeField(ac);
+      // Use approach DA/MDA as the ceiling threshold (not VFR 1000ft).
+      // ILS Cat I: ceiling ≥ 200ft AGL, vis ≥ 0.5 SM.
+      // RNAV:      ceiling ≥ 400ft AGL, vis ≥ 1 SM.
+      const daAgl = ac.clearances.approach.type === 'ILS' ? 200 : 400;
+      const minVis  = ac.clearances.approach.type === 'ILS' ? 0.5 : 1.0;
+      const sightResult = this.canPilotSeeField(ac, daAgl, minVis);
       if (sightResult === 'yes') {
         // Auto-acquire visual at minimums — pilot reports "runway in sight"
         ac.visualSight = { state: 'fieldSighted', queriedAtTick: currentTick, responseDelay: 0 };
@@ -625,12 +630,22 @@ export class PilotAI {
    *   'notYet' — VFR conditions but too far away (will see when closer)
    *   'no'     — IMC conditions (will never see without weather change)
    */
-  private canPilotSeeField(ac: AircraftState): 'yes' | 'notYet' | 'no' {
+  /**
+   * @param minCeilingAgl  Minimum ceiling AGL for "visible" (default 1000 = VFR).
+   *                       Pass the approach DA (200 for ILS, 400 for RNAV) when
+   *                       checking visibility at minimums.
+   * @param minVisibilitySm  Minimum visibility in SM (default 3 = VFR; 0.5 for ILS Cat I).
+   */
+  private canPilotSeeField(
+    ac: AircraftState,
+    minCeilingAgl = 1000,
+    minVisibilitySm = 3,
+  ): 'yes' | 'notYet' | 'no' {
     const { ceiling, visibility } = this.weather;
 
-    // IMC: ceiling below 1000ft AGL or visibility below 3SM
-    if (ceiling !== null && ceiling < 1000) return 'no';
-    if (visibility < 3) return 'no';
+    // Below required ceiling or visibility — pilot cannot acquire visual
+    if (ceiling !== null && ceiling < minCeilingAgl) return 'no';
+    if (visibility < minVisibilitySm) return 'no';
 
     // Distance check: pilots can realistically see the airport within ~visibility nm
     // (1 SM ≈ 0.87 nm; use 0.85 as conservative factor)

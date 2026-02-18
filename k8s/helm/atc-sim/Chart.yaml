@@ -1,0 +1,12 @@
+apiVersion: v2
+name: atc-sim
+description: Browser-based TRACON ATC simulator (KRIC) with STARS radar display
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - atc
+  - aviation
+  - simulator
+  - react
+  - nodejs

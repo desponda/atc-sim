@@ -1,5 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { WebSocketServer, WebSocket } from 'ws';
 import type {
   ClientMessage,
@@ -32,6 +34,11 @@ app.post('/api/session', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
+});
+
+// Health check (used by K8s liveness/readiness probes)
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' });
 });
 
 // REST: Get session info
@@ -276,6 +283,19 @@ function broadcastToSession(sessionId: string, msg: ServerMessage): void {
       client.send(data);
     }
   }
+}
+
+// ─── Static client (production) ────────────────────────────────────────────
+const staticDir = process.env.STATIC_DIR;
+if (staticDir && existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+  // SPA fallback — all non-API routes serve index.html
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(join(staticDir, 'index.html'));
+    }
+  });
+  console.log(`[Server] Serving static client from ${staticDir}`);
 }
 
 // ─── Start server ──────────────────────────────────────────────────────────
