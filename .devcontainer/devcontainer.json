@@ -3,16 +3,13 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
 
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
-    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
 
   "onCreateCommand": "npm install -g pnpm@9 && pnpm install",
 
-  "postStartCommand": "pnpm install --frozen-lockfile 2>/dev/null || true",
+  "postStartCommand": "pnpm install --frozen-lockfile || echo 'Warning: pnpm install failed but continuing...'",
 
   "forwardPorts": [3001, 5173],
   "portsAttributes": {
