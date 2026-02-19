@@ -439,18 +439,27 @@ export class ScenarioGenerator {
       const altitude = 4000 + Math.floor(Math.random() * 3) * 1000; // 4k-6k
       const speed = 250;
 
-      // At 18-28nm the aircraft has already passed the STAR entry fixes.
-      // No route — just fly heading toward the airport; controller will vector to final.
-      // Keep the STAR name on the strip so the controller knows which STAR they came via.
-      const heading = normalizeHeading(initialBearing(position, this.airportData.position));
+      // Route = STAR fixes still ahead of this aircraft's position.
+      // Uses a comprehensive fix map built from the STAR's own leg data.
+      let route: string[] = [];
+      const starName: string | null = candidateStar?.name ?? null;
+      if (candidateStar) {
+        const { transitionName } = this.pickStarTransition(candidateStar);
+        const fullRoute = this.getStarRoute(candidateStar, arrivalRunway, transitionName);
+        route = this.trimRouteAhead(fullRoute, position);
+      }
+
+      const heading = route.length > 0
+        ? this.headingToFixId(position, route[0])
+        : normalizeHeading(initialBearing(position, this.airportData.position));
 
       const flightPlan: FlightPlan = {
         departure: pickRandom(COMMON_AIRPORTS).icao,
         arrival: this.airportData.icao,
         cruiseAltitude: 35000,
-        route: [],
+        route,
         sid: null,
-        star: candidateStar?.name ?? null,
+        star: starName,
         runway: arrivalRunway,
         squawk: this.aircraftManager.nextSquawk(),
       };
@@ -469,6 +478,10 @@ export class ScenarioGenerator {
 
       ac.targetAltitude = altitude;
       ac.clearances.altitude = altitude;
+      if (route.length > 0) {
+        ac.clearances.descendViaSTAR = true;
+        ac.clearances.procedure = starName;
+      }
       ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
       // Pending initially — center initiates handoff after 3-6 seconds
@@ -1004,6 +1017,64 @@ export class ScenarioGenerator {
     route = dedupAppend(route, commonLegs);
     route = dedupAppend(route, rwyLegs);
     return route;
+  }
+
+  /**
+   * Build a map of fix ID → Position from all STAR leg data.
+   * STAR procedure fixes are NOT in airportData.fixes — they must be extracted
+   * from the leg objects inside each STAR's transitions and commonLegs.
+   */
+  private buildStarFixMap(): Map<string, Position> {
+    const map = new Map<string, Position>();
+    for (const star of this.airportData.stars) {
+      for (const leg of star.commonLegs) {
+        if (leg.fix) map.set(leg.fix.id, leg.fix.position);
+      }
+      for (const trans of star.enrouteTransitions) {
+        for (const leg of trans.legs) {
+          if (leg.fix) map.set(leg.fix.id, leg.fix.position);
+        }
+      }
+      for (const trans of star.runwayTransitions) {
+        for (const leg of trans.legs) {
+          if (leg.fix) map.set(leg.fix.id, leg.fix.position);
+        }
+      }
+    }
+    // Supplement with named airspace fixes
+    for (const fix of this.airportData.fixes) {
+      if (!map.has(fix.id)) map.set(fix.id, fix.position);
+    }
+    return map;
+  }
+
+  /**
+   * Return the sub-route starting from the first fix still ahead of the aircraft
+   * (i.e., closer to the airport than the aircraft's current position).
+   * Fixes already passed (farther from airport than the aircraft) are dropped.
+   */
+  private trimRouteAhead(route: string[], position: Position): string[] {
+    if (route.length === 0) return [];
+    const fixMap = this.buildStarFixMap();
+    const aircraftDistToAirport = haversineDistance(position, this.airportData.position);
+    for (let i = 0; i < route.length; i++) {
+      const fixPos = fixMap.get(route[i]);
+      if (!fixPos) continue;
+      if (haversineDistance(fixPos, this.airportData.position) <= aircraftDistToAirport) {
+        return route.slice(i);
+      }
+    }
+    return []; // All fixes already passed — aircraft will fly direct
+  }
+
+  /**
+   * Return the heading from `position` toward the named fix.
+   * Falls back to a direct heading to the airport if the fix is unknown.
+   */
+  private headingToFixId(position: Position, fixId: string): number {
+    const fixPos = this.buildStarFixMap().get(fixId);
+    if (!fixPos) return normalizeHeading(initialBearing(position, this.airportData.position));
+    return normalizeHeading(initialBearing(position, fixPos));
   }
 
   private pickArrivalRunway(): string {
