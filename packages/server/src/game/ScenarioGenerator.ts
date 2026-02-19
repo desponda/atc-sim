@@ -439,32 +439,20 @@ export class ScenarioGenerator {
       const altitude = 4000 + Math.floor(Math.random() * 3) * 1000; // 4k-6k
       const speed = 250;
 
-      let route: string[] = [];
-      let starName: string | null = null;
-      if (candidateStar) {
-        const { transitionName } = this.pickStarTransition(candidateStar);
-        route = this.getStarRoute(candidateStar, arrivalRunway, transitionName);
-        starName = candidateStar.name;
-      }
-
-      // Trim route to fixes ahead of the aircraft (past fixes are already behind it)
-      // Find the first fix the aircraft hasn't yet passed
-      const trimmedRoute = this.trimRouteToPosition(route, position);
+      // At 18-28nm the aircraft has already passed the STAR entry fixes.
+      // No route — just fly heading toward the airport; controller will vector to final.
+      const heading = normalizeHeading(initialBearing(position, this.airportData.position));
 
       const flightPlan: FlightPlan = {
         departure: pickRandom(COMMON_AIRPORTS).icao,
         arrival: this.airportData.icao,
         cruiseAltitude: 35000,
-        route: trimmedRoute,
+        route: [],
         sid: null,
-        star: starName,
+        star: null,
         runway: arrivalRunway,
         squawk: this.aircraftManager.nextSquawk(),
       };
-
-      const heading = trimmedRoute.length > 0
-        ? this.headingToFix(position, trimmedRoute[0])
-        : normalizeHeading(initialBearing(position, this.airportData.position));
 
       const ac = this.aircraftManager.spawnAircraft({
         callsign,
@@ -480,10 +468,6 @@ export class ScenarioGenerator {
 
       ac.targetAltitude = altitude;
       ac.clearances.altitude = altitude;
-      if (trimmedRoute.length > 0) {
-        ac.clearances.descendViaSTAR = true;
-        ac.clearances.procedure = starName;
-      }
       ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
       // Pending initially — center initiates handoff after 3-6 seconds
@@ -494,39 +478,6 @@ export class ScenarioGenerator {
     }
 
     return null;
-  }
-
-  /**
-   * Trim a STAR route to only include fixes ahead of the given position.
-   * Removes fixes that the aircraft has already passed (closer to airport than current pos).
-   */
-  private trimRouteToPosition(route: string[], position: ReturnType<typeof destinationPoint>): string[] {
-    if (route.length === 0) return route;
-    const distToAirport = haversineDistance(position, this.airportData.position);
-    // Keep fixes that are closer to the airport than the aircraft's current distance,
-    // meaning they are "ahead" on the inbound track
-    const fixMap = new Map<string, { lat: number; lon: number }>();
-    for (const fix of this.airportData.fixes ?? []) {
-      fixMap.set(fix.id, fix.position);
-    }
-    // Find the first fix that is closer to the airport than the aircraft
-    const firstAhead = route.findIndex(fixId => {
-      const fixPos = fixMap.get(fixId);
-      if (!fixPos) return true; // unknown fix — keep it
-      return haversineDistance(fixPos, this.airportData.position) < distToAirport;
-    });
-    return firstAhead >= 0 ? route.slice(firstAhead) : route;
-  }
-
-  /** Compute heading from a position toward a named fix */
-  private headingToFix(position: ReturnType<typeof destinationPoint>, fixId: string): number {
-    const fixMap = new Map<string, { lat: number; lon: number }>();
-    for (const fix of this.airportData.fixes ?? []) {
-      fixMap.set(fix.id, fix.position);
-    }
-    const fixPos = fixMap.get(fixId);
-    if (!fixPos) return normalizeHeading(initialBearing(position, this.airportData.position));
-    return normalizeHeading(initialBearing(position, fixPos));
   }
 
   private spawnArrival(): AircraftState | null {
