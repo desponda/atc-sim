@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useGameStore } from '../state/GameStore';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
+import { getGameClient } from '../network/GameClient';
 
 const panelStyle: React.CSSProperties = {
   position: 'absolute',
@@ -116,12 +117,15 @@ function gradeColor(grade: string): string {
   return '#ff3333'; // F
 }
 
+const SIM_SPEEDS = [1, 2, 4, 8];
+
 export const DCBPanel: React.FC = () => {
   const scopeSettings = useGameStore((s) => s.scopeSettings);
   const setScopeSettings = useGameStore((s) => s.setScopeSettings);
   const score = useGameStore((s) => s.score);
   const toggleVideoMap = useGameStore((s) => s.toggleVideoMap);
   const airportData = useGameStore((s) => s.airportData);
+  const timeScale = useGameStore((s) => s.clock?.timeScale ?? 1);
 
   const toggleMap = useCallback(
     (key: 'showFixes' | 'showSIDs' | 'showSTARs' | 'showAirspace' | 'showRunways') => {
@@ -242,6 +246,22 @@ export const DCBPanel: React.FC = () => {
               onClick={() => setScopeSettings({ velocityVectorMinutes: v })}
             >
               {v === 0 ? 'OFF' : v}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Sim Speed */}
+      <div style={sectionStyle}>
+        <div style={labelStyle}>SIM SPEED</div>
+        <div style={buttonRowStyle}>
+          {SIM_SPEEDS.map((s) => (
+            <button
+              key={s}
+              style={buttonStyle(timeScale === s)}
+              onClick={() => getGameClient().setTimeScale(s)}
+            >
+              {s}x
             </button>
           ))}
         </div>

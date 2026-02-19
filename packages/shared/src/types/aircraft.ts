@@ -213,6 +213,8 @@ export interface AircraftState {
   handoffAcceptedAt?: number;
   /** Countdown ticks before the aircraft checks in after handoff acceptance (3–5 ticks) */
   checkInDelayTicks?: number;
+  /** Sim tick at which center initiates the handoff offer (for close-in pending arrivals) */
+  handoffOfferAfterTick?: number;
 
   /** Arrival or departure from controller perspective */
   category: 'arrival' | 'departure' | 'overflight' | 'vfr';

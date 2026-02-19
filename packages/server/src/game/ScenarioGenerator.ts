@@ -75,14 +75,24 @@ const DENSITY_OPS: Record<string, number> = {
 };
 
 /**
- * How many aircraft to pre-seed at session start, proportionate to density.
- * These are distributed across a wide distance range (28–80nm) so they
- * represent a realistic inbound picture already built up by center.
+ * Close-in arrivals spawned at tick 0 on STARs, 30-40nm out.
+ * Center initiates handoff after a short 5-10s delay so the controller
+ * gets a brief look before having to action anything.
+ */
+const IMMEDIATE_COUNT: Record<string, number> = {
+  light: 2,
+  moderate: 3,
+  heavy: 4,
+};
+
+/**
+ * Far-out warm-up aircraft spread across 50-80nm.
+ * These are en-route center traffic, silent until they approach 45nm.
  */
 const WARM_UP_COUNT: Record<string, number> = {
-  light: 3,
-  moderate: 6,
-  heavy: 10,
+  light: 1,
+  moderate: 3,
+  heavy: 6,
 };
 
 /**
@@ -90,14 +100,14 @@ const WARM_UP_COUNT: Record<string, number> = {
  * distance tier system, not by time delay.
  */
 const WARM_UP_INTERVAL_SECS: Record<string, number> = {
-  light: 20,
-  moderate: 12,
-  heavy: 8,
+  light: 25,
+  moderate: 15,
+  heavy: 10,
 };
 
-/** Distance range across which warm-up arrivals are spread (nm from airport) */
+/** Distance range across which far-out warm-up arrivals are spread (nm from airport) */
 const WARM_UP_DIST_FAR_NM = 80;
-const WARM_UP_DIST_NEAR_NM = 28;
+const WARM_UP_DIST_NEAR_NM = 50;
 
 /**
  * ScenarioGenerator spawns traffic into the simulation.
@@ -116,6 +126,7 @@ export class ScenarioGenerator {
   private totalSpawned = 0;
   private warmupArrivalsSpawned = 0; // tracks warm-up arrival index for distance tiers
   private vfrCounter = 0;
+  private immediateSpawnsDone = false; // tracks whether tick-0 close-in arrivals have been seeded
 
   constructor(
     airportData: AirportData,
@@ -134,13 +145,32 @@ export class ScenarioGenerator {
    */
   update(tickCount: number, timeScale: number): AircraftState | null {
     this.currentTick = tickCount;
+
+    // --- Tick-1 immediate seed: close-in arrivals on STARs (30-40nm) ---
+    // Spawned all at once on the very first tick so the controller immediately
+    // has aircraft to work with.  Center initiates handoff after 5-10s.
+    if (!this.immediateSpawnsDone && tickCount >= 1) {
+      this.immediateSpawnsDone = true;
+      if (this.config.scenarioType !== 'departures') {
+        const count = IMMEDIATE_COUNT[this.config.density] ?? 2;
+        for (let i = 0; i < count; i++) {
+          const ac = this.spawnImmediateArrival(i, count, tickCount);
+          if (ac) {
+            this.totalSpawned++;
+          }
+        }
+      }
+      // Return null here — the immediate spawns are side-effects into aircraftManager.
+      // SimulationEngine will broadcast them in the next state push.
+      return null;
+    }
+
     const warmupCount = WARM_UP_COUNT[this.config.density] ?? 3;
-    const warmupIntervalSecs = WARM_UP_INTERVAL_SECS[this.config.density] ?? 50;
+    const warmupIntervalSecs = WARM_UP_INTERVAL_SECS[this.config.density] ?? 25;
     const opsPerHour = DENSITY_OPS[this.config.density] || 16;
 
-    // Warm-up phase: first few aircraft spawn on a shorter interval to ease the
-    // player in; after that, settle into the normal density-based rate.
-    const inWarmup = this.totalSpawned < warmupCount;
+    // Warm-up phase: far-out en-route aircraft on a moderate interval.
+    const inWarmup = this.totalSpawned < (IMMEDIATE_COUNT[this.config.density] ?? 2) + warmupCount;
     const intervalSecs = inWarmup ? warmupIntervalSecs : (3600 / opsPerHour);
     const intervalTicks = Math.max(1, Math.round(intervalSecs / timeScale));
 
@@ -186,9 +216,7 @@ export class ScenarioGenerator {
     let ac: AircraftState | null;
     if (isArrival) {
       if (inWarmup) {
-        // During warm-up, distribute arrivals from far (80nm) to near (28nm)
-        // so the opening picture looks like center already built the sequence.
-        const warmupCount = WARM_UP_COUNT[this.config.density] ?? 3;
+        // During warm-up, distribute far-out arrivals (50-80nm) — en-route center traffic.
         ac = this.spawnWarmupArrival(this.warmupArrivalsSpawned, warmupCount);
         if (ac) this.warmupArrivalsSpawned++;
       } else {
@@ -380,6 +408,127 @@ export class ScenarioGenerator {
     return null; // All positions congested — skip this cycle
   }
 
+  /**
+   * Spawn a close-in arrival (30-40nm) at session start, on a STAR.
+   * Center initiates handoff after a 5-10s delay so the controller gets
+   * a brief look before having to action anything.
+   */
+  private spawnImmediateArrival(index: number, total: number, tickCount: number): AircraftState | null {
+    const { callsign, typeDesignator } = this.generateCallsign();
+    const stars = this.airportData.stars ?? [];
+
+    // Distribute bearings evenly across available STARs
+    const star = stars.length > 0 ? stars[index % stars.length] : null;
+
+    const existing = this.aircraftManager.getAll();
+    const MIN_SPACING_NM = 12;
+
+    // Try to place on STAR, cycling through all STARs for variety
+    for (let attempt = 0; attempt < stars.length + 2; attempt++) {
+      const candidateStar = stars.length > 0 ? stars[(index + attempt) % stars.length] : null;
+      const targetDist = 30 + (index / Math.max(1, total - 1)) * 10; // 30-40nm spread
+      const bearing = candidateStar
+        ? initialBearing(this.airportData.position, this.pickStarTransition(candidateStar).position)
+        : (index / total) * 360;
+      const dist = targetDist + (Math.random() * 6 - 3);
+      const position = destinationPoint(this.airportData.position, bearing, Math.max(28, dist));
+      const tooClose = existing.some(ac => haversineDistance(ac.position, position) < MIN_SPACING_NM);
+      if (tooClose) continue;
+
+      const arrivalRunway = this.pickArrivalRunway();
+      const altitude = 6000 + Math.floor(Math.random() * 3) * 1000; // 6k-8k
+      const speed = 250;
+
+      let route: string[] = [];
+      let starName: string | null = null;
+      if (candidateStar) {
+        const { transitionName } = this.pickStarTransition(candidateStar);
+        route = this.getStarRoute(candidateStar, arrivalRunway, transitionName);
+        starName = candidateStar.name;
+      }
+
+      // Trim route to fixes ahead of the aircraft (past fixes are already behind it)
+      // Find the first fix the aircraft hasn't yet passed
+      const trimmedRoute = this.trimRouteToPosition(route, position);
+
+      const flightPlan: FlightPlan = {
+        departure: pickRandom(COMMON_AIRPORTS).icao,
+        arrival: this.airportData.icao,
+        cruiseAltitude: 35000,
+        route: trimmedRoute,
+        sid: null,
+        star: starName,
+        runway: arrivalRunway,
+        squawk: this.aircraftManager.nextSquawk(),
+      };
+
+      const heading = trimmedRoute.length > 0
+        ? this.headingToFix(position, trimmedRoute[0])
+        : normalizeHeading(initialBearing(position, this.airportData.position));
+
+      const ac = this.aircraftManager.spawnAircraft({
+        callsign,
+        typeDesignator,
+        position,
+        altitude,
+        heading,
+        speed,
+        flightPlan,
+        category: 'arrival',
+        flightPhase: 'descent',
+      });
+
+      ac.targetAltitude = altitude;
+      ac.clearances.altitude = altitude;
+      if (trimmedRoute.length > 0) {
+        ac.clearances.descendViaSTAR = true;
+        ac.clearances.procedure = starName;
+      }
+      ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
+
+      // Pending initially — center initiates handoff after 5-10 seconds
+      ac.inboundHandoff = 'pending';
+      ac.handoffOfferAfterTick = tickCount + 5 + Math.floor(Math.random() * 6); // 5-10s
+
+      return ac;
+    }
+
+    return null;
+  }
+
+  /**
+   * Trim a STAR route to only include fixes ahead of the given position.
+   * Removes fixes that the aircraft has already passed (closer to airport than current pos).
+   */
+  private trimRouteToPosition(route: string[], position: ReturnType<typeof destinationPoint>): string[] {
+    if (route.length === 0) return route;
+    const distToAirport = haversineDistance(position, this.airportData.position);
+    // Keep fixes that are closer to the airport than the aircraft's current distance,
+    // meaning they are "ahead" on the inbound track
+    const fixMap = new Map<string, { lat: number; lon: number }>();
+    for (const fix of this.airportData.fixes ?? []) {
+      fixMap.set(fix.id, fix.position);
+    }
+    // Find the first fix that is closer to the airport than the aircraft
+    const firstAhead = route.findIndex(fixId => {
+      const fixPos = fixMap.get(fixId);
+      if (!fixPos) return true; // unknown fix — keep it
+      return haversineDistance(fixPos, this.airportData.position) < distToAirport;
+    });
+    return firstAhead >= 0 ? route.slice(firstAhead) : route;
+  }
+
+  /** Compute heading from a position toward a named fix */
+  private headingToFix(position: ReturnType<typeof destinationPoint>, fixId: string): number {
+    const fixMap = new Map<string, { lat: number; lon: number }>();
+    for (const fix of this.airportData.fixes ?? []) {
+      fixMap.set(fix.id, fix.position);
+    }
+    const fixPos = fixMap.get(fixId);
+    if (!fixPos) return normalizeHeading(initialBearing(position, this.airportData.position));
+    return normalizeHeading(initialBearing(position, fixPos));
+  }
+
   private spawnArrival(): AircraftState | null {
     // 35% chance of a vectored arrival from a non-STAR direction (N/NE/E/SE)
     // to fill in the eastern semicircle not covered by KRIC's three STARs (SW/W/NW).
@@ -444,10 +593,14 @@ export class ScenarioGenerator {
     // briefing reflect what approach type the controller intends to use.
     ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
-    // Center pre-offers handoff for all arrivals — controller must accept
-    // before the aircraft checks in on approach frequency.
-    ac.inboundHandoff = 'offered';
-    ac.inboundHandoffOfferedAt = this.currentTick;
+    // Apply same pending/offered distance rule as warm-up traffic for consistency.
+    const distFromAirport = haversineDistance(entryFix, this.airportData.position);
+    if (distFromAirport > 45) {
+      ac.inboundHandoff = 'pending';
+    } else {
+      ac.inboundHandoff = 'offered';
+      ac.inboundHandoffOfferedAt = this.currentTick;
+    }
 
     return ac;
   }
@@ -519,10 +672,14 @@ export class ScenarioGenerator {
     // Set expected approach based on session preference.
     ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
-    // Center pre-offers handoff for all arrivals — controller must accept
-    // before the aircraft checks in on approach frequency.
-    ac.inboundHandoff = 'offered';
-    ac.inboundHandoffOfferedAt = this.currentTick;
+    // Apply same pending/offered distance rule for consistency.
+    const distFromAirportV = haversineDistance(position, this.airportData.position);
+    if (distFromAirportV > 45) {
+      ac.inboundHandoff = 'pending';
+    } else {
+      ac.inboundHandoff = 'offered';
+      ac.inboundHandoffOfferedAt = this.currentTick;
+    }
 
     return ac;
   }

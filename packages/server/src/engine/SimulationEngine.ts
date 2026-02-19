@@ -511,14 +511,20 @@ export class SimulationEngine {
       }
     }
 
-    // 3b. Transition center's 'pending' arrivals to 'offered' as they enter TRACON
+    // 3b. Transition center's 'pending' arrivals to 'offered'.
+    // Two triggers: (a) aircraft crosses inside 45nm, or (b) a scheduled tick
+    // is reached (used for close-in session-start arrivals that need a brief delay).
     const HANDOFF_OFFER_NM = 45;
     for (const ac of this.aircraftManager.getAll()) {
       if (ac.inboundHandoff === 'pending' && ac.category === 'arrival') {
         const dist = haversineDistance(ac.position, this.airportData.position);
-        if (dist <= HANDOFF_OFFER_NM) {
+        const withinRange = dist <= HANDOFF_OFFER_NM;
+        const scheduledReady = ac.handoffOfferAfterTick === undefined
+          || this.clock.tickCount >= ac.handoffOfferAfterTick;
+        if (withinRange && scheduledReady) {
           ac.inboundHandoff = 'offered';
           ac.inboundHandoffOfferedAt = this.clock.tickCount;
+          ac.handoffOfferAfterTick = undefined;
         }
       }
     }

@@ -229,13 +229,11 @@ export class MapLayer {
         ctx.stroke();
       }
 
-      // Label with 2px offset, 9px font
-      ctx.fillStyle = STARSColors.mapLabel;
-      ctx.fillText(fix.id, pos.x + s + 2, pos.y - s);
-
-      // Reset glow
+      // Reset glow before text — shadowBlur on fillText makes text fuzzy
       ctx.shadowBlur = 0;
       ctx.shadowColor = 'transparent';
+      ctx.fillStyle = STARSColors.mapLabel;
+      ctx.fillText(fix.id, pos.x + s + 2, pos.y - s);
     }
   }
 
@@ -317,16 +315,18 @@ export class MapLayer {
         ctx.stroke();
       }
 
-      // --- Runway label at midpoint, offset to the side ---
-      ctx.shadowBlur = STARSGlow.map;
-      ctx.shadowColor = STARSColors.glow;
+      // --- Runway label just beyond the threshold (approach end) ---
+      // Offset opposite to runway direction so the number sits before the threshold,
+      // matching standard STARS presentation where each end shows its own designator.
+      // No shadowBlur on text — it makes labels fuzzy.
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
       ctx.font = `${STARSFonts.mapLabel}px ${STARSFonts.family}`;
       ctx.fillStyle = STARSColors.mapLabel;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const midX = (threshold.x + end.x) / 2;
-      const midY = (threshold.y + end.y) / 2;
-      ctx.fillText(rwy.id, midX + px * 12, midY + py * 12);
+      const labelOffset = 14; // pixels outside threshold
+      ctx.fillText(rwy.id, threshold.x - ux * labelOffset, threshold.y - uy * labelOffset);
 
       // Reset glow
       ctx.shadowBlur = 0;
@@ -492,7 +492,9 @@ export class MapLayer {
         ctx.stroke();
       }
 
-      // Fix label (upper-right of marker)
+      // Fix label (upper-right of marker) — clear glow before text to avoid fuzz
+      ctx.shadowBlur = 0;
+      ctx.shadowColor = 'transparent';
       ctx.fillStyle = COLOR;
       const labelX = pos.x + s + 2;
       const labelY = pos.y - s;
@@ -505,9 +507,6 @@ export class MapLayer {
         ctx.globalAlpha = 1;
       }
     }
-
-    ctx.shadowBlur = 0;
-    ctx.shadowColor = 'transparent';
 
     return new Set(fixMap.keys());
   }
