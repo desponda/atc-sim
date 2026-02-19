@@ -54,13 +54,6 @@ export interface SessionConfig {
   runwayConfig: RunwayConfig;
   /** Initial weather */
   weather: WeatherState;
-  /**
-   * Preferred approach type for arrivals.
-   * In VMC: VISUAL, ILS, and RNAV are all valid options.
-   * In IMC: VISUAL is not available; only ILS/RNAV apply.
-   * Defaults to 'ILS' when not provided.
-   */
-  preferredApproach?: 'VISUAL' | 'ILS' | 'RNAV';
 }
 
 /** Simulation time state */

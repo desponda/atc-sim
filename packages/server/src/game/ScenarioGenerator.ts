@@ -763,21 +763,22 @@ export class ScenarioGenerator {
   }
 
   /**
-   * Resolve the expected approach type for a given runway based on the session's
-   * preferredApproach setting. Falls back to ILS if the runway has one, else RNAV.
-   * If the controller prefers VISUAL but the runway lacks ILS, returns VISUAL.
+   * Resolve the expected approach type for a given runway based on current weather.
+   * In VMC (ceiling ≥ 1000, vis ≥ 3): visual approaches are valid — controller assigns
+   * approach type via radio during the session, so we default to VISUAL here.
+   * In IMC: use best available instrument approach (ILS if available, else RNAV).
    */
   private resolveExpectedApproach(runwayId: string): { type: 'ILS' | 'RNAV' | 'VISUAL'; runway: string } {
-    const pref = this.config.preferredApproach ?? 'ILS';
+    const wx = this.config.weather;
+    const ceiling = wx.ceiling ?? Infinity;
+    const vis = wx.visibility;
     const rwy = this.airportData.runways.find(r => r.id === runwayId);
 
-    if (pref === 'VISUAL') {
+    // VMC — visual approaches valid, controller assigns type via radio
+    if (ceiling >= 1000 && vis >= 3) {
       return { type: 'VISUAL', runway: runwayId };
     }
-    if (pref === 'RNAV') {
-      return { type: 'RNAV', runway: runwayId };
-    }
-    // ILS preferred; fall back to RNAV if no ILS on this runway
+    // IMC — best available instrument approach
     if (rwy?.ilsAvailable) {
       return { type: 'ILS', runway: runwayId };
     }

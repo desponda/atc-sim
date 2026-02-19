@@ -95,12 +95,6 @@ const optionButtonStyle = (active: boolean, disabled = false): React.CSSProperti
   opacity: disabled ? 0.35 : 1,
 });
 
-const inputFieldStyle: React.CSSProperties = {
-  ...selectStyle,
-  width: 80,
-  outline: 'none',
-};
-
 const startButtonStyle: React.CSSProperties = {
   width: '100%',
   padding: '10px',
@@ -136,10 +130,6 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [wxConditions, setWxConditions] = useState(wxInit.wx);
   const [arrRunways, setArrRunways] = useState<string[]>(wxInit.cfg.arr);
   const [depRunways, setDepRunways] = useState<string[]>(wxInit.cfg.dep);
-  // Default to VISUAL in VMC, ILS otherwise
-  const [approachPreference, setApproachPreference] = useState<'VISUAL' | 'ILS' | 'RNAV'>(
-    wxInit.wx.visualOk ? 'VISUAL' : 'ILS'
-  );
 
   const rerollWeather = useCallback(() => {
     const newWx = generateRandomWeather();
@@ -149,8 +139,6 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
     // Reapply default config; if a previously selected runway is now unavailable, drop it
     setArrRunways(cfg.arr.filter(r => avail.includes(r)));
     setDepRunways(cfg.dep.filter(r => avail.includes(r)));
-    // Reset approach preference to match new weather
-    setApproachPreference(newWx.visualOk ? 'VISUAL' : 'ILS');
   }, []);
 
   const toggleRunway = useCallback((set: Dispatch<SetStateAction<string[]>>, r: string) => {
@@ -172,12 +160,11 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         departureRunways: depRunways,
       },
       weather: wxConditions.weather,
-      preferredApproach: approachPreference,
     };
 
     getGameClient().createSession(config);
     onStart?.();
-  }, [airport, density, scenarioType, arrRunways, depRunways, wxConditions, approachPreference, onStart]);
+  }, [airport, density, scenarioType, arrRunways, depRunways, wxConditions, onStart]);
 
   return (
     <div style={containerStyle}>
@@ -217,37 +204,8 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* Approach Type — show all options valid for current weather */}
-        {(() => {
-          const wx = wxConditions.weather;
-          const ceiling = wx.ceiling ?? Infinity;
-          const vis = wx.visibility;
-          const opts: Array<'VISUAL' | 'ILS' | 'RNAV'> = [];
-          if (ceiling >= 1000 && vis >= 3) opts.push('VISUAL');
-          if (ceiling >= 200 && vis >= 0.5) opts.push('ILS');
-          if (ceiling >= 400 && vis >= 1.0) opts.push('RNAV');
-          if (opts.length <= 1) return null; // nothing to choose from
-          return (
-            <div style={fieldGroupStyle}>
-              <label style={labelStyle}>APPROACH TYPE</label>
-              <div style={buttonGroupStyle}>
-                {opts.map((pref) => (
-                  <button
-                    key={pref}
-                    style={optionButtonStyle(approachPreference === pref)}
-                    onClick={() => setApproachPreference(pref)}
-                  >
-                    {pref}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
         {/* Runways — multi-select toggles */}
         {(() => {
-          const avail = availableRunways(wxConditions.weather);
           const flowCfg = defaultRunwayConfig(wxConditions.weather);
           // Flow label: derived from which long runway (16/34) is in the default set
           const flowLabel = flowCfg.arr.includes('34') ? 'NORTH FLOW'
@@ -255,20 +213,11 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
             : flowCfg.arr.includes('02') ? 'NE FLOW'
             : 'SW FLOW';
 
-          // Resolve effective approach for a runway given the controller's preference.
-          // In VMC the controller may prefer VISUAL or ILS; in IMC the best available wins.
-          const effectiveApproach = (rwyId: string): 'ILS' | 'RNAV' | 'VISUAL' | null => {
-            const cap = approachCapability(rwyId, wxConditions.weather);
-            if (!cap) return null;
-            if (!wxConditions.visualOk) return cap; // IMC — use best available
-            // VMC: honour preference, fall back if not available on this runway
-            if (approachPreference === 'ILS') {
-              const info = KRIC_RUNWAY_INFO[rwyId];
-              if (info?.ilsMinimumsAGL !== null) return 'ILS';
-              if (info?.rnavMinimumsAGL !== null) return 'RNAV';
-            }
-            return 'VISUAL';
-          };
+          // Best available approach for this runway given current conditions.
+          // In VMC, visual is always shown (controller assigns approach type via radio).
+          // In IMC, only instrument approaches that meet minimums are shown.
+          const effectiveApproach = (rwyId: string): 'ILS' | 'RNAV' | 'VISUAL' | null =>
+            approachCapability(rwyId, wxConditions.weather);
 
           const RunwayButtons = ({
             selected, onToggle,
