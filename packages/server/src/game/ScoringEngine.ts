@@ -46,6 +46,8 @@ export class ScoringEngine {
 
   /** Accumulated penalty points from handoff timing (subtracted in calculateScore) */
   private handoffPenaltyPoints = 0;
+  /** Accumulated penalty points from bad commands (subtracted in calculateScore) */
+  private badCommandPenaltyPoints = 0;
 
   /** Record a new alert */
   recordAlert(alert: Alert): void {
@@ -96,7 +98,7 @@ export class ScoringEngine {
 
   /** Apply a point penalty for a bad command (e.g. invalid frequency) */
   recordBadCommand(points: number): void {
-    this.metrics.overallScore = Math.max(0, this.metrics.overallScore - points);
+    this.badCommandPenaltyPoints += points;
     this.calculateScore();
   }
 
@@ -248,6 +250,9 @@ export class ScoringEngine {
     // Handoff timing penalties (late/missed tower and center handoffs)
     score -= this.handoffPenaltyPoints;
 
+    // Bad command penalties
+    score -= this.badCommandPenaltyPoints;
+
     this.metrics.overallScore = Math.max(0, Math.min(100, Math.round(score)));
     this.metrics.grade = this.gradeFromScore(this.metrics.overallScore);
   }
@@ -286,6 +291,7 @@ export class ScoringEngine {
     this.msawIncidents = 0;
     this.cleanAircraft = 0;
     this.handoffPenaltyPoints = 0;
+    this.badCommandPenaltyPoints = 0;
     this.lateTowerHandoffPenalized.clear();
     this.missedTowerHandoffPenalized.clear();
     this.lateCenterHandoffPenalized.clear();

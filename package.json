@@ -5,7 +5,9 @@
     "dev": "concurrently \"pnpm --filter @atc-sim/server dev\" \"pnpm --filter @atc-sim/client dev\"",
     "build": "pnpm --filter @atc-sim/shared build && pnpm --filter @atc-sim/server build && pnpm --filter @atc-sim/client build",
     "build:shared": "pnpm --filter @atc-sim/shared build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

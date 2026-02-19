@@ -297,10 +297,10 @@ describe('FlightPlanExecutor localizer capture', () => {
     expect(ac.flightPhase).toBe('final');
   });
 
-  it('captures localizer when within 1nm cross-track and heading within 45°', () => {
-    // Place aircraft 0.8nm east of centerline at 10nm
+  it('captures localizer when within 0.3nm cross-track and heading within 45°', () => {
+    // Capture threshold is 0.3nm — place aircraft 0.25nm east of centerline at 10nm
     const centerPos = destinationPoint(THRESHOLD, RECIPROCAL, 10);
-    const offsetPos = destinationPoint(centerPos, 90, 0.8); // 0.8nm east
+    const offsetPos = destinationPoint(centerPos, 90, 0.25); // 0.25nm east (within 0.3nm threshold)
     const ac = makeAircraft({
       position: offsetPos,
       altitude: 3000,
@@ -538,6 +538,7 @@ describe('FlightPlanExecutor localizer tracking', () => {
     const initialXtk = Math.abs(crossTrackDistance(ac.position, THRESHOLD, farPoint));
 
     const physics = new PhysicsEngine();
+    physics.setAirportData(minimalAirportData()); // required for snapToLocalizerCenterline
     // Run 60 ticks — aircraft should converge toward centerline
     for (let i = 0; i < 60; i++) {
       const dist = haversineDistance(ac.position, THRESHOLD);
@@ -570,6 +571,7 @@ describe('FlightPlanExecutor localizer tracking', () => {
     const initialXtk = Math.abs(crossTrackDistance(ac.position, THRESHOLD, farPoint));
 
     const physics = new PhysicsEngine();
+    physics.setAirportData(minimalAirportData()); // required for snapToLocalizerCenterline
     for (let i = 0; i < 60; i++) {
       const dist = haversineDistance(ac.position, THRESHOLD);
       ac.targetAltitude = Math.max(RWY_ELEVATION, glideslopeAltitude(dist, RWY_ELEVATION, GS_ANGLE));
