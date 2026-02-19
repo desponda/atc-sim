@@ -1,24 +1,56 @@
 import React, { useState, useCallback } from 'react';
 import { getGameClient } from '../network/GameClient';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
-import type { SessionConfig, TrafficDensity, ScenarioType } from '@atc-sim/shared';
+import type { SessionConfig, TrafficDensity, ScenarioType, WeatherState } from '@atc-sim/shared';
 import { generateRandomWeather, wxCategoryColor } from './weatherGen';
 
-const KRIC_RUNWAYS = ['16', '34', '07', '25'];
+/** KRIC runway capabilities sourced from kric.json + real-world approach plates.
+ *  minimumsAGL = DA/MDA in feet above field elevation (KRIC elev = 167ft MSL). */
+const KRIC_RUNWAY_INFO: Record<string, {
+  heading: number;
+  lengthFt: number;
+  approaches: Array<{ type: 'ILS' | 'RNAV' }>;
+  minimumsAGL: number; // lowest available minimums for this runway
+}> = {
+  '16': { heading: 157, lengthFt: 9003, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 342 },
+  '34': { heading: 337, lengthFt: 9003, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 322 },
+  '02': { heading: 23,  lengthFt: 6607, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 316 },
+  '20': { heading: 203, lengthFt: 6607, approaches: [{ type: 'RNAV' }],                  minimumsAGL: 337 },
+};
 
-/** Approximate runway heading from designator (e.g. "16" → 160°, "34" → 340°) */
-function headingFromRunway(rwyId: string): number {
-  return parseInt(rwyId.replace(/[LCR]/g, ''), 10) * 10;
+const KRIC_RUNWAYS = ['16', '34', '02', '20'];
+
+/** Best available approach type for a runway given current weather */
+function approachCapability(rwyId: string, wx: WeatherState): 'ILS' | 'RNAV' | 'VISUAL' | null {
+  const info = KRIC_RUNWAY_INFO[rwyId];
+  if (!info) return null;
+  const ceiling = wx.ceiling ?? Infinity;
+  const vis = wx.visibility;
+  // Visual: ceiling ≥ 1000 ft AGL, vis ≥ 3 SM (FAA VFR minima)
+  if (ceiling >= 1000 && vis >= 3) return 'VISUAL';
+  // ILS: ceiling above DA, vis ≥ 0.75 SM (CAT I minima)
+  if (info.approaches.some(a => a.type === 'ILS') && ceiling >= info.minimumsAGL && vis >= 0.75) return 'ILS';
+  // RNAV: ceiling above MDA, vis ≥ 1 SM
+  if (info.approaches.some(a => a.type === 'RNAV') && ceiling >= info.minimumsAGL && vis >= 1.0) return 'RNAV';
+  return null; // Below all minimums
 }
 
-/** Return the runway with the smallest headwind angle for the given wind direction */
-function bestRunwayForWind(windDir: number, runways: string[] = KRIC_RUNWAYS): string {
-  let best = runways[0];
-  let bestAngle = 181;
-  for (const rwy of runways) {
-    const hdg = headingFromRunway(rwy);
-    const angle = Math.abs(((windDir - hdg + 180 + 360) % 360) - 180);
-    if (angle < bestAngle) { bestAngle = angle; best = rwy; }
+/** Runways usable under current weather */
+function availableRunways(wx: WeatherState): string[] {
+  return KRIC_RUNWAYS.filter(r => approachCapability(r, wx) !== null);
+}
+
+/** Runway with best headwind from available list; prefers longer runway as tiebreaker */
+function bestRunwayForWind(windDir: number, available: string[]): string {
+  if (available.length === 0) return KRIC_RUNWAYS[0];
+  let best = available[0];
+  let bestScore = -Infinity;
+  for (const rwyId of available) {
+    const info = KRIC_RUNWAY_INFO[rwyId];
+    const angle = Math.abs(((windDir - info.heading + 180 + 360) % 360) - 180);
+    // Headwind preference (lower angle = better) + tiny length bonus as tiebreaker
+    const score = (180 - angle) + info.lengthFt / 100_000;
+    if (score > bestScore) { bestScore = score; best = rwyId; }
   }
   return best;
 }
@@ -92,18 +124,19 @@ const buttonGroupStyle: React.CSSProperties = {
   gap: 4,
 };
 
-const optionButtonStyle = (active: boolean): React.CSSProperties => ({
+const optionButtonStyle = (active: boolean, disabled = false): React.CSSProperties => ({
   flex: 1,
-  padding: '6px 8px',
+  padding: '5px 6px',
   background: active ? STARSColors.panelButtonActive : STARSColors.panelButton,
   border: `1px solid ${active ? '#003300' : STARSColors.panelBorder}`,
-  color: active ? STARSColors.normal : STARSColors.dimText,
-  textShadow: active ? `0 0 4px ${STARSColors.glow}` : 'none',
+  color: disabled ? '#333' : (active ? STARSColors.normal : STARSColors.dimText),
+  textShadow: active && !disabled ? `0 0 4px ${STARSColors.glow}` : 'none',
   boxShadow: active ? 'inset 0 1px 3px rgba(0,0,0,0.6)' : 'none',
   fontFamily: STARSFonts.family,
   fontSize: 12,
-  cursor: 'pointer',
+  cursor: disabled ? 'not-allowed' : 'pointer',
   textAlign: 'center',
+  opacity: disabled ? 0.35 : 1,
 });
 
 const inputFieldStyle: React.CSSProperties = {
@@ -138,10 +171,11 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [density, setDensity] = useState<TrafficDensity>('moderate');
   const [scenarioType, setScenarioType] = useState<ScenarioType>('mixed');
 
-  // Initialize wx and runways together so the runway reflects the initial wind
+  // Initialize wx and runways together so the runway reflects the initial wind + wx
   const [wxInit] = useState(() => {
     const wx = generateRandomWeather();
-    const best = bestRunwayForWind(wx.weather.winds[0]?.direction ?? 0);
+    const avail = availableRunways(wx.weather);
+    const best = bestRunwayForWind(wx.weather.winds[0]?.direction ?? 0, avail);
     return { wx, best };
   });
   const [wxConditions, setWxConditions] = useState(wxInit.wx);
@@ -150,10 +184,12 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
 
   const rerollWeather = useCallback(() => {
     const newWx = generateRandomWeather();
-    const best = bestRunwayForWind(newWx.weather.winds[0]?.direction ?? 0);
+    const avail = availableRunways(newWx.weather);
+    const best = bestRunwayForWind(newWx.weather.winds[0]?.direction ?? 0, avail);
     setWxConditions(newWx);
-    setArrRunway(best);
-    setDepRunway(best);
+    // If the current runway is no longer available under the new wx, switch to best
+    setArrRunway(prev => avail.includes(prev) ? prev : best);
+    setDepRunway(prev => avail.includes(prev) ? prev : best);
   }, []);
 
   const handleStart = useCallback(() => {
@@ -214,29 +250,49 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         {(() => {
           const windDir = wxConditions.weather.winds[0]?.direction ?? 0;
           const windSpeed = wxConditions.weather.winds[0]?.speed ?? 0;
-          const recommended = windSpeed > 0 ? bestRunwayForWind(windDir) : null;
+          const avail = availableRunways(wxConditions.weather);
+          const recommended = windSpeed > 0 ? bestRunwayForWind(windDir, avail) : avail[0] ?? null;
+
+          const RunwayButtons = ({ selected, onSelect }: { selected: string; onSelect: (r: string) => void }) => (
+            <div style={buttonGroupStyle}>
+              {KRIC_RUNWAYS.map((r) => {
+                const info = KRIC_RUNWAY_INFO[r];
+                const cap = approachCapability(r, wxConditions.weather);
+                const isAvail = cap !== null;
+                const isActive = selected === r;
+                const isRec = r === recommended && !isActive;
+                const capColor = cap === 'ILS' ? STARSColors.normal : cap === 'RNAV' ? STARSColors.caution : STARSColors.dimText;
+                return (
+                  <button
+                    key={r}
+                    style={optionButtonStyle(isActive, !isAvail)}
+                    onClick={() => isAvail && onSelect(r)}
+                    title={isAvail ? `RWY ${r} — ${info.lengthFt} ft — ${cap}` : `RWY ${r} — below minimums`}
+                  >
+                    <div style={{ fontSize: 12, lineHeight: '1.2' }}>
+                      {r}{isRec ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
+                    </div>
+                    <div style={{ fontSize: 8, marginTop: 1, color: isAvail ? capColor : '#333' }}>
+                      {isAvail ? cap : 'N/A'}
+                    </div>
+                    <div style={{ fontSize: 8, color: STARSColors.dimText }}>
+                      {(info.lengthFt / 1000).toFixed(1)}k
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+
           return (
             <>
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>ARRIVAL RUNWAY</label>
-                <div style={buttonGroupStyle}>
-                  {KRIC_RUNWAYS.map((r) => (
-                    <button key={r} style={optionButtonStyle(arrRunway === r)} onClick={() => setArrRunway(r)}>
-                      {r}{recommended === r && arrRunway !== r ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
-                    </button>
-                  ))}
-                </div>
+                <RunwayButtons selected={arrRunway} onSelect={setArrRunway} />
               </div>
-
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>DEPARTURE RUNWAY</label>
-                <div style={buttonGroupStyle}>
-                  {KRIC_RUNWAYS.map((r) => (
-                    <button key={r} style={optionButtonStyle(depRunway === r)} onClick={() => setDepRunway(r)}>
-                      {r}{recommended === r && depRunway !== r ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
-                    </button>
-                  ))}
-                </div>
+                <RunwayButtons selected={depRunway} onSelect={setDepRunway} />
               </div>
             </>
           );
