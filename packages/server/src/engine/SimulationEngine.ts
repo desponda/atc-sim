@@ -535,24 +535,28 @@ export class SimulationEngine {
     // 5. Cleanup: remove landed/exited aircraft
     // Before cleanup, check for aircraft about to leave without handoff
     const allBeforeCleanup = this.aircraftManager.getAll();
-    const aboutToLeave = new Map<string, { callsign: string; handedOff: boolean; scoredAtHandoff: boolean; category: string }>();
+    const aboutToLeave = new Map<string, { callsign: string; handedOff: boolean; scoredAtHandoff: boolean; category: string; inboundAccepted: boolean }>();
     for (const ac of allBeforeCleanup) {
       const alreadyScored = this.pilotAI.wasHandoffScored(ac.id);
       if (ac.flightPhase === 'landed') {
-        aboutToLeave.set(ac.id, { callsign: ac.callsign, handedOff: true, scoredAtHandoff: alreadyScored, category: ac.category });
+        aboutToLeave.set(ac.id, { callsign: ac.callsign, handedOff: true, scoredAtHandoff: alreadyScored, category: ac.category, inboundAccepted: true });
       } else {
         aboutToLeave.set(ac.id, {
           callsign: ac.callsign,
           handedOff: ac.handingOff || ac.clearances.handoffFrequency !== null,
           scoredAtHandoff: alreadyScored,
           category: ac.category,
+          // Player is only responsible for an arrival once they accepted the
+          // inbound handoff from center.  Aircraft still showing as 'offered'
+          // were never under player control — don't penalise for their exit.
+          inboundAccepted: ac.category !== 'arrival' || ac.inboundHandoff === 'accepted',
         });
       }
     }
     const removed = this.aircraftManager.cleanup(this.airportData);
     for (const id of removed) {
       const info = aboutToLeave.get(id);
-      if (info && !info.handedOff && info.category !== 'vfr') {
+      if (info && !info.handedOff && info.category !== 'vfr' && info.inboundAccepted) {
         // Aircraft left airspace without proper handoff - major penalty
         this.scoringEngine.recordMissedHandoff();
         const alert: Alert = {

@@ -1,11 +1,15 @@
 import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { AircraftPerformance } from '@atc-sim/shared';
 
 function findDataDir(): string {
+  const __dirname = dirname(fileURLToPath(import.meta.url));
   const candidates = [
     join(process.cwd(), 'data'),
     resolve('data'),
+    join(__dirname, '../../../../data'), // src/data -> src -> server -> packages -> root
+    join(__dirname, '../../../data'),    // dist/data -> dist -> server -> packages (compiled)
   ];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;

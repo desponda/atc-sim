@@ -115,101 +115,77 @@ export class MapLayer {
   private drawVideoMaps(maps: VideoMap[]): void {
     const ctx = this.ctx;
 
+    // No shadow blur on video maps — it's extremely expensive with thousands of
+    // stroke() calls and the dim geographic lines don't benefit visually.
+    ctx.lineWidth = 1;
+
     for (const map of maps) {
       if (!this.options.enabledVideoMaps[map.id]) continue;
 
       const defaultColor = this.getVideoMapDefaultColor(map);
 
-      ctx.shadowBlur = STARSGlow.map;
-      ctx.shadowColor = STARSColors.glow;
+      // Batch line/polygon features by color into single paths to minimise
+      // ctx.stroke() calls (the primary GPU bottleneck with large data sets).
+      const pathsByColor = new Map<string, Array<VideoMapFeature>>();
+      const labelFeatures: VideoMapFeature[] = [];
 
       for (const feature of map.features) {
-        this.drawVideoMapFeature(feature, defaultColor);
+        if (feature.type === 'label' || feature.type === 'symbol') {
+          labelFeatures.push(feature);
+        } else {
+          const color = feature.color ?? defaultColor;
+          let bucket = pathsByColor.get(color);
+          if (!bucket) { bucket = []; pathsByColor.set(color, bucket); }
+          bucket.push(feature);
+        }
       }
 
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = 'transparent';
-    }
-  }
+      // Draw batched paths — one stroke() call per unique color
+      for (const [color, features] of pathsByColor) {
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        for (const feature of features) {
+          if (!feature.points || feature.points.length < 2) continue;
+          const first = this.projection.project(feature.points[0]);
+          ctx.moveTo(first.x, first.y);
+          for (let i = 1; i < feature.points.length; i++) {
+            const pt = this.projection.project(feature.points[i]);
+            ctx.lineTo(pt.x, pt.y);
+          }
+          if (feature.type === 'polygon') ctx.closePath();
+        }
+        ctx.stroke();
+      }
 
-  private drawVideoMapFeature(feature: VideoMapFeature, defaultColor: string): void {
-    const ctx = this.ctx;
-    const color = feature.color ?? defaultColor;
-
-    switch (feature.type) {
-      case 'line': {
-        if (!feature.points || feature.points.length < 2) break;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        if (feature.lineDash) {
-          ctx.setLineDash(feature.lineDash);
-        }
-        ctx.beginPath();
-        const first = this.projection.project(feature.points[0]);
-        ctx.moveTo(first.x, first.y);
-        for (let i = 1; i < feature.points.length; i++) {
-          const pt = this.projection.project(feature.points[i]);
-          ctx.lineTo(pt.x, pt.y);
-        }
-        ctx.stroke();
-        if (feature.lineDash) {
-          ctx.setLineDash([]);
-        }
-        break;
-      }
-      case 'polygon': {
-        if (!feature.points || feature.points.length < 3) break;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        if (feature.lineDash) {
-          ctx.setLineDash(feature.lineDash);
-        }
-        ctx.beginPath();
-        const first = this.projection.project(feature.points[0]);
-        ctx.moveTo(first.x, first.y);
-        for (let i = 1; i < feature.points.length; i++) {
-          const pt = this.projection.project(feature.points[i]);
-          ctx.lineTo(pt.x, pt.y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-        if (feature.lineDash) {
-          ctx.setLineDash([]);
-        }
-        break;
-      }
-      case 'label': {
-        if (!feature.position || !feature.text) break;
-        const pos = this.projection.project(feature.position);
-        ctx.fillStyle = color;
-        ctx.font = `8px ${STARSFonts.family}`;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(feature.text, pos.x, pos.y);
-        break;
-      }
-      case 'symbol': {
-        if (!feature.position) break;
-        const pos = this.projection.project(feature.position);
-        const arm = 4;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
-        // Draw "+" crosshair
-        ctx.beginPath();
-        ctx.moveTo(pos.x - arm, pos.y);
-        ctx.lineTo(pos.x + arm, pos.y);
-        ctx.moveTo(pos.x, pos.y - arm);
-        ctx.lineTo(pos.x, pos.y + arm);
-        ctx.stroke();
-        // Draw text label offset to the right
-        if (feature.text) {
+      // Draw labels and symbols (these must be drawn individually)
+      ctx.font = `8px ${STARSFonts.family}`;
+      for (const feature of labelFeatures) {
+        const color = feature.color ?? defaultColor;
+        if (feature.type === 'label') {
+          if (!feature.position || !feature.text) continue;
+          const pos = this.projection.project(feature.position);
           ctx.fillStyle = color;
-          ctx.font = `8px ${STARSFonts.family}`;
           ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(feature.text, pos.x + arm + 2, pos.y);
+          ctx.textBaseline = 'top';
+          ctx.fillText(feature.text, pos.x, pos.y);
+        } else if (feature.type === 'symbol') {
+          if (!feature.position) continue;
+          const pos = this.projection.project(feature.position);
+          const arm = 4;
+          ctx.strokeStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(pos.x - arm, pos.y);
+          ctx.lineTo(pos.x + arm, pos.y);
+          ctx.moveTo(pos.x, pos.y - arm);
+          ctx.lineTo(pos.x, pos.y + arm);
+          ctx.stroke();
+          if (feature.text) {
+            ctx.fillStyle = color;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(feature.text, pos.x + arm + 2, pos.y);
+          }
         }
-        break;
       }
     }
   }

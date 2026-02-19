@@ -3513,7 +3513,7 @@
   ],
   "tracon": {
     "name": "Potomac TRACON \u2014 James River Sector",
-    "ceiling": 17000,
+    "ceiling": 23000,
     "floor": 0,
     "lateralRadiusNm": 40
   }

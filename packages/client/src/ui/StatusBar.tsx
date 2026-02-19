@@ -82,6 +82,7 @@ export const StatusBar: React.FC<{ showCmdRef?: boolean; onToggleCmdRef?: () => 
   const connected = useGameStore((s) => s.connected);
   const aircraft = useGameStore((s) => s.aircraft);
   const atisText = useGameStore((s) => s.atisText);
+  const airportData = useGameStore((s) => s.airportData);
 
   const [showAtis, setShowAtis] = useState(false);
 
@@ -121,7 +122,7 @@ export const StatusBar: React.FC<{ showCmdRef?: boolean; onToggleCmdRef?: () => 
         <span style={separatorStyle}>|</span>
         <span>ALT {altStr}</span>
         <span style={separatorStyle}>|</span>
-        <span>SFC–FL230</span>
+        <span>SFC–FL{airportData?.tracon ? Math.round(airportData.tracon.ceiling / 100) : '???'}</span>
       </div>
       <div style={sectionStyle}>
         <span>ARR {arrRwys}</span>

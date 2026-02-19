@@ -12,8 +12,9 @@ import { haversineDistance } from '@atc-sim/shared';
 import { v4 as uuid } from 'uuid';
 import { performanceDB } from '../data/PerformanceDB.js';
 
-/** Default airspace radius in nm - aircraft beyond this are removed */
-const AIRSPACE_RADIUS_NM = 80;
+/** Default airspace radius in nm - aircraft beyond this are removed.
+ *  Set to 100nm to encompass all STAR entry fixes (some are 89-93nm from KRIC). */
+const AIRSPACE_RADIUS_NM = 100;
 
 /** Create default clearances */
 function defaultClearances(): Clearances {

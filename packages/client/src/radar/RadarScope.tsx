@@ -25,6 +25,7 @@ export const RadarScope: React.FC = () => {
   const alerts = useGameStore((s) => s.alerts);
   const selectedAircraftId = useGameStore((s) => s.selectedAircraftId);
   const airportData = useGameStore((s) => s.airportData);
+  const session = useGameStore((s) => s.session);
   const scopeSettings = useGameStore((s) => s.scopeSettings);
   const stripPanelCollapsed = useGameStore((s) => s.stripPanelCollapsed);
 
@@ -148,10 +149,26 @@ export const RadarScope: React.FC = () => {
     if (airportData) {
       managerRef.current?.setAirportData(airportData);
       if (airportData.videoMaps) {
-        initVideoMapDefaults(airportData.videoMaps);
+        // Determine which primary geographic map to activate based on the
+        // primary arrival runway heading: southerly runways (90-270°) draw
+        // traffic from the north → enable jrv-north; northerly runway → jrv-south.
+        const primaryRwyId = session?.config.runwayConfig.arrivalRunways[0];
+        const primaryRwy = primaryRwyId
+          ? airportData.runways.find(r => r.id === primaryRwyId)
+          : null;
+        const southerlyApproach = primaryRwy
+          ? primaryRwy.heading >= 90 && primaryRwy.heading <= 270
+          : true; // default to north map if unknown
+
+        const videoMapsWithDefaults = airportData.videoMaps.map(vm => {
+          if (vm.id === 'jrv-north') return { ...vm, defaultVisible: southerlyApproach };
+          if (vm.id === 'jrv-south') return { ...vm, defaultVisible: !southerlyApproach };
+          return vm;
+        });
+        initVideoMapDefaults(videoMapsWithDefaults);
       }
     }
-  }, [airportData, initVideoMapDefaults]);
+  }, [airportData, session, initVideoMapDefaults]);
 
   // Sync scope settings
   useEffect(() => {

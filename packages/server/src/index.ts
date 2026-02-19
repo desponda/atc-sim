@@ -304,3 +304,11 @@ server.listen(PORT, () => {
   console.log(`[Server] REST: http://localhost:${PORT}/api/session`);
   console.log(`[Server] WebSocket: ws://localhost:${PORT}`);
 });
+
+// Graceful shutdown — ensures the port is released before tsx watch restarts
+function shutdown() {
+  wss.close();
+  server.close(() => process.exit(0));
+}
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

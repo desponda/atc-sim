@@ -1,13 +1,18 @@
 import { readFileSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { join, resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { AirportData, Position, VideoMap } from '@atc-sim/shared';
 
 // Resolve data directory relative to project root (works with tsx and compiled)
 function findDataDir(): string {
-  // Try common locations
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  // Try common locations — including paths relative to this source file so dev
+  // mode (cwd = packages/server) can still find data/ at the repo root.
   const candidates = [
     join(process.cwd(), 'data'),
     resolve('data'),
+    join(__dirname, '../../../../data'), // src/data -> src -> server -> packages -> root
+    join(__dirname, '../../../data'),    // dist/data -> dist -> server -> packages (compiled)
   ];
   for (const dir of candidates) {
     if (existsSync(dir)) return dir;

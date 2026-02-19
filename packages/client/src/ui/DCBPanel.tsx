@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useGameStore } from '../state/GameStore';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
 
@@ -63,6 +63,50 @@ const CmdLine: React.FC<{ cmd: string; desc: string }> = ({ cmd, desc }) => (
     <span style={{ color: '#445544' }}>{desc}</span>
   </div>
 );
+
+import type { VideoMap } from '@atc-sim/shared';
+
+interface VideoMapSectionProps {
+  videoMaps: VideoMap[];
+  enabledVideoMaps: Record<string, boolean>;
+  toggleVideoMap: (id: string) => void;
+  buttonStyle: (active: boolean) => React.CSSProperties;
+}
+
+const VideoMapSection: React.FC<VideoMapSectionProps> = ({ videoMaps, enabledVideoMaps, toggleVideoMap, buttonStyle }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    cursor: 'pointer',
+    marginBottom: expanded ? 4 : 0,
+  };
+
+  return (
+    <div style={sectionStyle}>
+      <div style={headerStyle} onClick={() => setExpanded(e => !e)}>
+        <div style={labelStyle}>VMAP</div>
+        <span style={{ color: STARSColors.dimText, fontSize: 8, lineHeight: 1 }}>{expanded ? '▲' : '▼'}</span>
+      </div>
+      {expanded && (
+        <div style={buttonRowStyle}>
+          {videoMaps.map((vm) => (
+            <button
+              key={vm.id}
+              style={buttonStyle(!!enabledVideoMaps[vm.id])}
+              onClick={() => toggleVideoMap(vm.id)}
+              title={vm.name}
+            >
+              {vm.shortName}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 function gradeColor(grade: string): string {
   if (grade === 'A+' || grade === 'A') return '#00ff88';
@@ -163,21 +207,12 @@ export const DCBPanel: React.FC = () => {
 
       {/* Video Maps */}
       {airportData?.videoMaps && airportData.videoMaps.length > 0 && (
-        <div style={sectionStyle}>
-          <div style={labelStyle}>VMAP</div>
-          <div style={buttonRowStyle}>
-            {airportData.videoMaps.map((vm) => (
-              <button
-                key={vm.id}
-                style={buttonStyle(!!scopeSettings.enabledVideoMaps[vm.id])}
-                onClick={() => toggleVideoMap(vm.id)}
-                title={vm.name}
-              >
-                {vm.shortName}
-              </button>
-            ))}
-          </div>
-        </div>
+        <VideoMapSection
+          videoMaps={airportData.videoMaps}
+          enabledVideoMaps={scopeSettings.enabledVideoMaps}
+          toggleVideoMap={toggleVideoMap}
+          buttonStyle={buttonStyle}
+        />
       )}
 
       {/* History Trail */}
