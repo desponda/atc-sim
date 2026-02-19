@@ -91,6 +91,24 @@ export function generateRandomWeather(): WxConditions {
       break;
   }
 
+  // ── Playability guarantee ───────────────────────────────────────────────
+  // Ensure at least one ILS approach is always flyable so sessions are never
+  // unplayable. KRIC's lowest ILS minimum: 316 ft AGL / 0.75 SM (CAT I).
+  // We use a 350 ft ceiling floor to give a small buffer above that minimum.
+  const ILS_CEILING_FLOOR = 350; // ft AGL
+  const ILS_VIS_FLOOR = 0.75;    // SM
+  if (ceiling !== null && ceiling < ILS_CEILING_FLOOR) {
+    ceiling = ILS_CEILING_FLOOR;
+  }
+  if (visibility < ILS_VIS_FLOOR) {
+    visibility = ILS_VIS_FLOOR;
+  }
+  // Refresh LIFR description if either value was clamped
+  if (cat === 'LIFR') {
+    description = `Low IFR — ceiling ${ceiling} ft, vis ${visibility.toFixed(2)} SM`;
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const visualOk = (ceiling === null || ceiling >= 1000) && visibility >= 3;
 
   const weather: WeatherState = {
