@@ -4,18 +4,21 @@ import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
 import type { SessionConfig, TrafficDensity, ScenarioType, WeatherState } from '@atc-sim/shared';
 import { generateRandomWeather, wxCategoryColor } from './weatherGen';
 
-/** KRIC runway capabilities sourced from kric.json + real-world approach plates.
- *  minimumsAGL = DA/MDA in feet above field elevation (KRIC elev = 167ft MSL). */
+/** KRIC runway capabilities.
+ *  DA/MDA values match PilotAI.ts which hardcodes: ILS = runway.elevation + 200 ft,
+ *  RNAV = runway.elevation + 400 ft. These drive server-side go-around decisions.
+ *  The kric.json approach `minimums` field is currently unused by the server.
+ *  Vis mins: ILS CAT I = 0.5 SM (RVR 2400), RNAV = 1.0 SM. */
 const KRIC_RUNWAY_INFO: Record<string, {
   heading: number;
   lengthFt: number;
-  approaches: Array<{ type: 'ILS' | 'RNAV' }>;
-  minimumsAGL: number; // lowest available minimums for this runway
+  ilsMinimumsAGL: number | null;  // null = no ILS
+  rnavMinimumsAGL: number | null; // null = no RNAV
 }> = {
-  '16': { heading: 157, lengthFt: 9003, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 342 },
-  '34': { heading: 337, lengthFt: 9003, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 322 },
-  '02': { heading: 23,  lengthFt: 6607, approaches: [{ type: 'ILS' }, { type: 'RNAV' }], minimumsAGL: 316 },
-  '20': { heading: 203, lengthFt: 6607, approaches: [{ type: 'RNAV' }],                  minimumsAGL: 337 },
+  '16': { heading: 157, lengthFt: 9003, ilsMinimumsAGL: 200, rnavMinimumsAGL: 400 },
+  '34': { heading: 337, lengthFt: 9003, ilsMinimumsAGL: 200, rnavMinimumsAGL: 400 },
+  '02': { heading: 23,  lengthFt: 6607, ilsMinimumsAGL: 200, rnavMinimumsAGL: 400 },
+  '20': { heading: 203, lengthFt: 6607, ilsMinimumsAGL: null, rnavMinimumsAGL: 400 },
 };
 
 const KRIC_RUNWAYS = ['16', '34', '02', '20'];
@@ -28,10 +31,10 @@ function approachCapability(rwyId: string, wx: WeatherState): 'ILS' | 'RNAV' | '
   const vis = wx.visibility;
   // Visual: ceiling ≥ 1000 ft AGL, vis ≥ 3 SM (FAA VFR minima)
   if (ceiling >= 1000 && vis >= 3) return 'VISUAL';
-  // ILS: ceiling above DA, vis ≥ 0.75 SM (CAT I minima)
-  if (info.approaches.some(a => a.type === 'ILS') && ceiling >= info.minimumsAGL && vis >= 0.75) return 'ILS';
-  // RNAV: ceiling above MDA, vis ≥ 1 SM
-  if (info.approaches.some(a => a.type === 'RNAV') && ceiling >= info.minimumsAGL && vis >= 1.0) return 'RNAV';
+  // ILS CAT I: ceiling ≥ DA (200 ft HAT), vis ≥ 0.5 SM (RVR 2400)
+  if (info.ilsMinimumsAGL !== null && ceiling >= info.ilsMinimumsAGL && vis >= 0.5) return 'ILS';
+  // RNAV (LPV/LNAV): ceiling ≥ MDA, vis ≥ 1 SM
+  if (info.rnavMinimumsAGL !== null && ceiling >= info.rnavMinimumsAGL && vis >= 1.0) return 'RNAV';
   return null; // Below all minimums
 }
 
