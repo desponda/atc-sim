@@ -426,17 +426,17 @@ export class ScenarioGenerator {
     // Try to place on STAR, cycling through all STARs for variety
     for (let attempt = 0; attempt < stars.length + 2; attempt++) {
       const candidateStar = stars.length > 0 ? stars[(index + attempt) % stars.length] : null;
-      const targetDist = 30 + (index / Math.max(1, total - 1)) * 10; // 30-40nm spread
+      const targetDist = 18 + (index / Math.max(1, total - 1)) * 10; // 18-28nm spread
       const bearing = candidateStar
         ? initialBearing(this.airportData.position, this.pickStarTransition(candidateStar).position)
         : (index / total) * 360;
-      const dist = targetDist + (Math.random() * 6 - 3);
-      const position = destinationPoint(this.airportData.position, bearing, Math.max(28, dist));
+      const dist = targetDist + (Math.random() * 4 - 2);
+      const position = destinationPoint(this.airportData.position, bearing, Math.max(15, dist));
       const tooClose = existing.some(ac => haversineDistance(ac.position, position) < MIN_SPACING_NM);
       if (tooClose) continue;
 
       const arrivalRunway = this.pickArrivalRunway();
-      const altitude = 6000 + Math.floor(Math.random() * 3) * 1000; // 6k-8k
+      const altitude = 4000 + Math.floor(Math.random() * 3) * 1000; // 4k-6k
       const speed = 250;
 
       let route: string[] = [];
@@ -486,9 +486,9 @@ export class ScenarioGenerator {
       }
       ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
-      // Pending initially — center initiates handoff after 5-10 seconds
+      // Pending initially — center initiates handoff after 3-6 seconds
       ac.inboundHandoff = 'pending';
-      ac.handoffOfferAfterTick = tickCount + 5 + Math.floor(Math.random() * 6); // 5-10s
+      ac.handoffOfferAfterTick = tickCount + 3 + Math.floor(Math.random() * 4); // 3-6s
 
       return ac;
     }
