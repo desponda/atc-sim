@@ -136,6 +136,10 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [wxConditions, setWxConditions] = useState(wxInit.wx);
   const [arrRunways, setArrRunways] = useState<string[]>(wxInit.cfg.arr);
   const [depRunways, setDepRunways] = useState<string[]>(wxInit.cfg.dep);
+  // Default to VISUAL when wx allows, ILS otherwise
+  const [approachPreference, setApproachPreference] = useState<'VISUAL' | 'ILS'>(
+    wxInit.wx.visualOk ? 'VISUAL' : 'ILS'
+  );
 
   const rerollWeather = useCallback(() => {
     const newWx = generateRandomWeather();
@@ -145,6 +149,8 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
     // Reapply default config; if a previously selected runway is now unavailable, drop it
     setArrRunways(cfg.arr.filter(r => avail.includes(r)));
     setDepRunways(cfg.dep.filter(r => avail.includes(r)));
+    // Reset approach preference to match new weather
+    setApproachPreference(newWx.visualOk ? 'VISUAL' : 'ILS');
   }, []);
 
   const toggleRunway = useCallback((set: Dispatch<SetStateAction<string[]>>, r: string) => {
@@ -166,11 +172,12 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         departureRunways: depRunways,
       },
       weather: wxConditions.weather,
+      preferredApproach: approachPreference,
     };
 
     getGameClient().createSession(config);
     onStart?.();
-  }, [airport, density, scenarioType, arrRunways, depRunways, wxConditions, onStart]);
+  }, [airport, density, scenarioType, arrRunways, depRunways, wxConditions, approachPreference, onStart]);
 
   return (
     <div style={containerStyle}>
@@ -210,6 +217,24 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
           </div>
         </div>
 
+        {/* Approach Type — visible only when VMC allows visual */}
+        {wxConditions.visualOk && (
+          <div style={fieldGroupStyle}>
+            <label style={labelStyle}>APPROACH TYPE</label>
+            <div style={buttonGroupStyle}>
+              {(['VISUAL', 'ILS'] as const).map((pref) => (
+                <button
+                  key={pref}
+                  style={optionButtonStyle(approachPreference === pref)}
+                  onClick={() => setApproachPreference(pref)}
+                >
+                  {pref}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Runways — multi-select toggles */}
         {(() => {
           const avail = availableRunways(wxConditions.weather);
@@ -220,26 +245,41 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
             : flowCfg.arr.includes('02') ? 'NE FLOW'
             : 'SW FLOW';
 
+          // Resolve effective approach for a runway given the controller's preference.
+          // In VMC the controller may prefer VISUAL or ILS; in IMC the best available wins.
+          const effectiveApproach = (rwyId: string): 'ILS' | 'RNAV' | 'VISUAL' | null => {
+            const cap = approachCapability(rwyId, wxConditions.weather);
+            if (!cap) return null;
+            if (!wxConditions.visualOk) return cap; // IMC — use best available
+            // VMC: honour preference, fall back if not available on this runway
+            if (approachPreference === 'ILS') {
+              const info = KRIC_RUNWAY_INFO[rwyId];
+              if (info?.ilsMinimumsAGL !== null) return 'ILS';
+              if (info?.rnavMinimumsAGL !== null) return 'RNAV';
+            }
+            return 'VISUAL';
+          };
+
           const RunwayButtons = ({
             selected, onToggle,
           }: { selected: string[]; onToggle: (r: string) => void }) => (
             <div style={buttonGroupStyle}>
               {KRIC_RUNWAYS.map((r) => {
                 const info = KRIC_RUNWAY_INFO[r];
-                const cap = approachCapability(r, wxConditions.weather);
-                const isAvail = cap !== null;
+                const eff = effectiveApproach(r);
+                const isAvail = eff !== null;
                 const isActive = selected.includes(r);
-                const capColor = cap === 'ILS' ? STARSColors.normal : cap === 'RNAV' ? STARSColors.caution : '#00cc44';
+                const capColor = eff === 'ILS' ? STARSColors.normal : eff === 'RNAV' ? STARSColors.caution : '#00cc44';
                 return (
                   <button
                     key={r}
                     style={optionButtonStyle(isActive, !isAvail)}
                     onClick={() => isAvail && onToggle(r)}
-                    title={isAvail ? `RWY ${r} — ${info.lengthFt.toLocaleString()} ft — ${cap} (click to toggle)` : `RWY ${r} — below minimums`}
+                    title={isAvail ? `RWY ${r} — ${info.lengthFt.toLocaleString()} ft — ${eff} (click to toggle)` : `RWY ${r} — below minimums`}
                   >
                     <div style={{ fontSize: 12, lineHeight: '1.2' }}>{r}</div>
                     <div style={{ fontSize: 9, marginTop: 1, color: isAvail ? capColor : '#444' }}>
-                      {isAvail ? cap : 'N/A'}
+                      {isAvail ? eff : 'N/A'}
                     </div>
                     <div style={{ fontSize: 9, color: '#888888' }}>
                       {(info.lengthFt / 1000).toFixed(1)}k

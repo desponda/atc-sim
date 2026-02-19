@@ -315,6 +315,10 @@ export class ScenarioGenerator {
       ac.clearances.procedure = star.name;
     }
 
+    // Set expected approach based on session preference so the data tag and
+    // briefing reflect what approach type the controller intends to use.
+    ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
+
     // Center pre-offers handoff for all arrivals — controller must accept
     // before the aircraft checks in on approach frequency.
     ac.inboundHandoff = 'offered';
@@ -373,6 +377,9 @@ export class ScenarioGenerator {
 
     ac.targetAltitude = altitude;
     ac.clearances.altitude = altitude;
+
+    // Set expected approach based on session preference.
+    ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
 
     // Center pre-offers handoff for all arrivals — controller must accept
     // before the aircraft checks in on approach frequency.
@@ -753,6 +760,25 @@ export class ScenarioGenerator {
     if (arrivals.length > 0) return pickRandom(arrivals);
     if (this.airportData.runways.length > 0) return this.airportData.runways[0].id;
     return '16';
+  }
+
+  /**
+   * Resolve the expected approach type for a given runway based on the session's
+   * preferredApproach setting. Falls back to ILS if the runway has one, else RNAV.
+   * If the controller prefers VISUAL but the runway lacks ILS, returns VISUAL.
+   */
+  private resolveExpectedApproach(runwayId: string): { type: 'ILS' | 'RNAV' | 'VISUAL'; runway: string } {
+    const pref = this.config.preferredApproach ?? 'ILS';
+    const rwy = this.airportData.runways.find(r => r.id === runwayId);
+
+    if (pref === 'VISUAL') {
+      return { type: 'VISUAL', runway: runwayId };
+    }
+    // Prefer ILS; fall back to RNAV if no ILS on this runway
+    if (rwy?.ilsAvailable) {
+      return { type: 'ILS', runway: runwayId };
+    }
+    return { type: 'RNAV', runway: runwayId };
   }
 
   private pickDepartureRunway(): string {

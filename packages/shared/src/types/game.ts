@@ -54,6 +54,13 @@ export interface SessionConfig {
   runwayConfig: RunwayConfig;
   /** Initial weather */
   weather: WeatherState;
+  /**
+   * Preferred approach type for arrivals.
+   * 'VISUAL' — use visual approaches when VMC allows (ceiling ≥ 1000, vis ≥ 3 SM).
+   * 'ILS'    — use ILS even in VMC conditions.
+   * Defaults to 'ILS' when not provided (safe for all weather).
+   */
+  preferredApproach?: 'VISUAL' | 'ILS';
 }
 
 /** Simulation time state */
