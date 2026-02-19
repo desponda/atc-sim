@@ -117,7 +117,7 @@ export function generateRandomWeather(): WxConditions {
     temperature: Math.round(rand(-5, 32)),
     visibility,
     ceiling: ceiling ?? null,
-    atisLetter: 'A',
+    atisLetter: 'ABCDEFGHJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 25)],
   };
 
   return { weather, category: cat, visualOk, description };

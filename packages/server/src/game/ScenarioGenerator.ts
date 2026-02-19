@@ -441,6 +441,7 @@ export class ScenarioGenerator {
 
       // At 18-28nm the aircraft has already passed the STAR entry fixes.
       // No route — just fly heading toward the airport; controller will vector to final.
+      // Keep the STAR name on the strip so the controller knows which STAR they came via.
       const heading = normalizeHeading(initialBearing(position, this.airportData.position));
 
       const flightPlan: FlightPlan = {
@@ -449,7 +450,7 @@ export class ScenarioGenerator {
         cruiseAltitude: 35000,
         route: [],
         sid: null,
-        star: null,
+        star: candidateStar?.name ?? null,
         runway: arrivalRunway,
         squawk: this.aircraftManager.nextSquawk(),
       };

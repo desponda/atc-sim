@@ -38,7 +38,7 @@ describe('generateRandomWeather — output structure', () => {
     expect(typeof weather.altimeter).toBe('number');
     expect(typeof weather.temperature).toBe('number');
     expect(typeof weather.visibility).toBe('number');
-    expect(weather.atisLetter).toBe('A');
+    expect(weather.atisLetter).toMatch(/^[A-HJ-Z]$/);
   });
 
   it('wind direction is between 0 and 359', () => {
