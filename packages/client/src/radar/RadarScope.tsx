@@ -150,19 +150,20 @@ export const RadarScope: React.FC = () => {
       managerRef.current?.setAirportData(airportData);
       if (airportData.videoMaps) {
         // Determine which primary geographic map to activate based on the
-        // primary arrival runway heading: southerly runways (90-270°) draw
-        // traffic from the north → enable jrv-north; northerly runway → jrv-south.
+        // primary arrival runway heading: the map name matches the landing
+        // direction — jrv-south for southerly runways (90-270°, e.g. RWY 16),
+        // jrv-north for northerly runways (e.g. RWY 34).
         const primaryRwyId = session?.config.runwayConfig.arrivalRunways[0];
         const primaryRwy = primaryRwyId
           ? airportData.runways.find(r => r.id === primaryRwyId)
           : null;
         const southerlyApproach = primaryRwy
           ? primaryRwy.heading >= 90 && primaryRwy.heading <= 270
-          : true; // default to north map if unknown
+          : false; // default to north map if unknown
 
         const videoMapsWithDefaults = airportData.videoMaps.map(vm => {
-          if (vm.id === 'jrv-north') return { ...vm, defaultVisible: southerlyApproach };
-          if (vm.id === 'jrv-south') return { ...vm, defaultVisible: !southerlyApproach };
+          if (vm.id === 'jrv-north') return { ...vm, defaultVisible: !southerlyApproach };
+          if (vm.id === 'jrv-south') return { ...vm, defaultVisible: southerlyApproach };
           return vm;
         });
         initVideoMapDefaults(videoMapsWithDefaults);
