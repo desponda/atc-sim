@@ -46,49 +46,34 @@ function availableRunways(wx: WeatherState): string[] {
 /**
  * Determine the default active runway set for the given weather.
  *
- * Logic mirrors real-world KRIC operations:
- *   - Flow is determined by whether the wind has a northerly (→ RWY 34) or
- *     southerly (→ RWY 16) component.  Calm/variable defaults to north flow.
- *   - The long runway (16 or 34, 9 003 ft) is always the primary; it stays
- *     preferred unless the crosswind component exceeds ~25 kt on it, which
- *     almost never happens in the weather ranges we generate.
- *   - Opposite-end runways (16 vs 34) are never active simultaneously.
- *   - The crosswind runway (02 or 20) is added as a secondary departure option
- *     when its headwind component is meaningfully better than the primary's
- *     crosswind (i.e. winds are closer to east/west than north/south), AND the
- *     runway is available under the current weather.
- *   - Returns { arr, dep } arrays; caller may still override via the UI.
+ * Rule: include every available runway that has a headwind component
+ * (wind-to-runway angle ≤ 90°).  Airports with multiple long runways
+ * routinely run them all in the same flow simultaneously.
+ * Tailwind runways (angle > 90°) are excluded from the default.
+ * Calm/variable winds (< 3 kt) → all available runways are usable.
  */
 function defaultRunwayConfig(wx: WeatherState): { arr: string[]; dep: string[] } {
   const avail = availableRunways(wx);
-  if (avail.length === 0) return { arr: ['34'], dep: ['34'] }; // shouldn't happen after clamp
+  if (avail.length === 0) return { arr: ['34'], dep: ['34'] };
 
   const windDir = wx.winds[0]?.direction ?? 0;
   const windSpd = wx.winds[0]?.speed ?? 0;
 
-  // North flow: wind from 270–090 (inclusive), calm, or variable → use RWY 34
-  // South flow: wind from 090–270 → use RWY 16
-  const northFlow = windSpd === 0 || windDir >= 270 || windDir <= 90;
-  const primary = northFlow ? '34' : '16';
-  // Crosswind companion: 02 goes with 34 (north flow), 20 goes with 16 (south flow)
-  const crosswind = northFlow ? '02' : '20';
+  if (windSpd < 3) {
+    // Calm/variable — all available runways usable; default north flow
+    const northFlow = avail.filter(r => ['34', '02'].includes(r));
+    return { arr: northFlow.length ? northFlow : avail, dep: northFlow.length ? northFlow : avail };
+  }
 
-  // Fall back to best available if primary is somehow not available (e.g. deep LIFR)
-  const usePrimary = avail.includes(primary) ? primary : avail[0];
+  // Keep runways whose heading is within 90° of the wind (headwind component exists)
+  const inFlow = avail.filter(r => {
+    const hdg = KRIC_RUNWAY_INFO[r].heading;
+    const angle = Math.abs(((windDir - hdg + 180 + 360) % 360) - 180);
+    return angle <= 90;
+  });
 
-  // Add the crosswind runway as a secondary dep option only when:
-  //   1. it's available under current weather
-  //   2. its headwind angle is < 60° (it actually has a meaningful headwind component)
-  const crosswindInfo = KRIC_RUNWAY_INFO[crosswind];
-  const crosswindAngle = crosswindInfo
-    ? Math.abs(((windDir - crosswindInfo.heading + 180 + 360) % 360) - 180)
-    : 180;
-  const addCrosswind = avail.includes(crosswind) && crosswindAngle < 60;
-
-  return {
-    arr: [usePrimary],
-    dep: addCrosswind ? [usePrimary, crosswind] : [usePrimary],
-  };
+  const active = inFlow.length > 0 ? inFlow : avail; // safety fallback
+  return { arr: active, dep: active };
 }
 
 const containerStyle: React.CSSProperties = {
@@ -294,7 +279,11 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         {(() => {
           const avail = availableRunways(wxConditions.weather);
           const flowCfg = defaultRunwayConfig(wxConditions.weather);
-          const flowLabel = flowCfg.arr[0] === '34' ? 'NORTH FLOW' : 'SOUTH FLOW';
+          // Flow label: derived from which long runway (16/34) is in the default set
+          const flowLabel = flowCfg.arr.includes('34') ? 'NORTH FLOW'
+            : flowCfg.arr.includes('16') ? 'SOUTH FLOW'
+            : flowCfg.arr.includes('02') ? 'NE FLOW'
+            : 'SW FLOW';
 
           const RunwayButtons = ({
             selected, onToggle,
