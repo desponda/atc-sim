@@ -425,6 +425,18 @@ export class PilotAI {
           if (ac.clearances.climbViaSID) {
             ac.clearances.climbViaSID = false;
           }
+          // Issuing a vector to an aircraft on approach cancels the approach clearance.
+          // The aircraft stops intercepting/tracking the localizer and returns to
+          // level flight at the assigned altitude.
+          if (ac.clearances.approach) {
+            ac.clearances.approach = null;
+            ac.onLocalizer = false;
+            ac.onGlideslope = false;
+            ac.clearances.maintainUntilEstablished = null;
+            if (ac.flightPhase === 'approach' || ac.flightPhase === 'final') {
+              ac.flightPhase = 'descent';
+            }
+          }
           break;
 
         case 'speed':
@@ -578,7 +590,9 @@ export class PilotAI {
           ac.visualFollowTrafficCallsign = undefined;
 
           const goPerf = performanceDB.getOrDefault(ac.typeDesignator);
-          ac.targetSpeed = goPerf.speed.vapp + 20;
+          // Missed approach: accelerate to a safe climb speed, not just Vapp+20.
+          // Aircraft will continue to accelerate in executeMissedApproach.
+          ac.targetSpeed = Math.max(200, goPerf.speed.vapp + 40);
           break;
         }
 

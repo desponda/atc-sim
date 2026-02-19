@@ -408,6 +408,19 @@ export class FlightPlanExecutor {
       ac.targetAltitude = ac.clearances.altitude;
     }
 
+    // Speed management: accelerate to normal climb speed once safely airborne.
+    // Above 800ft AGL, aircraft cleans up and accelerates toward VmaxBelow10k.
+    if (ac.clearances.speed === null) {
+      const aglAlt = ac.altitude - this.airportData.elevation;
+      if (aglAlt > 800) {
+        const perf = performanceDB.getOrDefault(ac.typeDesignator);
+        const climbSpeed = Math.min(250, perf.speed.vmaxBelow10k);
+        if (ac.targetSpeed < climbSpeed) {
+          ac.targetSpeed = climbSpeed;
+        }
+      }
+    }
+
     // Find the approach procedure for the runway the aircraft was approaching
     const rwyId = ac.flightPlan.runway;
     if (!rwyId) {

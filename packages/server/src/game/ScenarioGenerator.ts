@@ -610,11 +610,11 @@ export class ScenarioGenerator {
   }
 
   /**
-   * Pick a STAR that won't create an immediate conflict.
-   * Checks two things:
-   *  1. No aircraft (any STAR or vectored) within 15nm of this STAR's entry fix.
-   *  2. The inner approach corridor (within 30nm of airport) has fewer than 3 arrivals,
-   *     so all STARs merging at the same common fix don't stack up simultaneously.
+   * Pick a STAR whose entry fix is clear of existing traffic.
+   * Checks that no aircraft (any STAR or vectored) is within 10nm of this
+   * STAR's entry fix — prevents spawning into the back of an aircraft already
+   * on the same routing. Multiple STARs can be loaded simultaneously; the
+   * controller sequences the resulting merge, which is part of the challenge.
    */
   private pickDeconflictedStar(): STAR | null {
     const stars = this.airportData.stars;
@@ -622,16 +622,7 @@ export class ScenarioGenerator {
 
     const existing = this.aircraftManager.getAll();
     const arrivals = existing.filter(ac => ac.category === 'arrival');
-    const MIN_ENTRY_SPACING_NM = 15;
-    const APPROACH_CORRIDOR_NM = 30;
-    const MAX_CORRIDOR_ARRIVALS = 2;
-
-    // Don't spawn if the approach corridor is already saturated.
-    // All KRIC STARs share a common path — adding more just creates merge conflicts.
-    const corridorCount = arrivals.filter(
-      ac => haversineDistance(ac.position, this.airportData.position) < APPROACH_CORRIDOR_NM
-    ).length;
-    if (corridorCount >= MAX_CORRIDOR_ARRIVALS) return null;
+    const MIN_ENTRY_SPACING_NM = 10;
 
     // Shuffle STARs to avoid always picking the same one
     const shuffled = [...stars].sort(() => Math.random() - 0.5);
@@ -640,7 +631,7 @@ export class ScenarioGenerator {
       const entryFix = this.getStarEntryPosition(star);
       let tooClose = false;
 
-      // Check against ALL arrivals (not just same-STAR) near the entry fix
+      // Check against ALL arrivals (not just same-STAR) near this entry fix
       for (const ac of arrivals) {
         const dist = haversineDistance(ac.position, entryFix);
         if (dist < MIN_ENTRY_SPACING_NM) {
@@ -652,7 +643,7 @@ export class ScenarioGenerator {
       if (!tooClose) return star;
     }
 
-    // All STARs congested — skip this spawn cycle
+    // All STAR entries congested — fall through to vectored arrival
     return null;
   }
 
