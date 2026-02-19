@@ -340,6 +340,19 @@ export const BriefingPanel: React.FC = () => {
           </div>
         </div>
 
+        {/* ── HANDOFF TIP ── */}
+        {hasArrivals && (
+          <div style={{ ...section, background: '#0a1a0a' }}>
+            <div style={sectionTitle}>Inbound Handoffs</div>
+            <div style={{ fontSize: 11, color: C.amber, marginBottom: 3 }}>
+              Arrivals from Center appear with an <span style={{ color: C.amber, fontWeight: 'bold' }}>amber blinking ▲</span> — click the target to accept the handoff.
+            </div>
+            <div style={{ fontSize: 10, color: C.dimWhite }}>
+              After acceptance the aircraft checks in on your frequency and the data tag turns white. Issue descent and sequencing from there.
+            </div>
+          </div>
+        )}
+
         {/* ── QUICK COMMANDS ── */}
         <div style={section}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px 24px' }}>

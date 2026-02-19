@@ -76,16 +76,16 @@ const DENSITY_OPS: Record<string, number> = {
 
 /** How many aircraft to spawn in the warm-up phase before settling into normal rate */
 const WARM_UP_COUNT: Record<string, number> = {
-  light: 3,
-  moderate: 6,
-  heavy: 8,
+  light: 2,
+  moderate: 3,
+  heavy: 5,
 };
 
-/** Seconds between spawns during warm-up (shorter = quicker first traffic) */
+/** Seconds between spawns during warm-up — spaced to avoid simultaneous STAR merges */
 const WARM_UP_INTERVAL_SECS: Record<string, number> = {
-  light: 25,
-  moderate: 15,
-  heavy: 10,
+  light: 120,
+  moderate: 90,
+  heavy: 60,
 };
 
 /**
@@ -330,10 +330,9 @@ export class ScenarioGenerator {
   /**
    * Spawn a vectored arrival from a direction not covered by published STARs.
    * KRIC STARs cover SW/W/NW — this fills in N/NE/E/SE/S.
+   * Tries up to 4 positions; returns null if no clear slot is found.
    */
   private spawnVectoredArrival(): AircraftState | null {
-    const { callsign, typeDesignator } = this.generateCallsign();
-
     // Bearing ranges not served by KRIC STARs (approx SW=200-250, W=260-290, NW=300-350)
     // Fill: N (350-020), NE (020-080), E (080-140), S/SE (140-200)
     const nonStarSectors: [number, number][] = [
@@ -342,12 +341,26 @@ export class ScenarioGenerator {
       [80, 140],
       [140, 200],
     ];
-    const [minB, maxB] = pickRandom(nonStarSectors);
-    const span = maxB > minB ? maxB - minB : maxB + 360 - minB;
-    const bearing = normalizeHeading(minB + Math.random() * span);
 
-    const dist = 35 + Math.random() * 10; // 35-45nm
-    const position = destinationPoint(this.airportData.position, bearing, dist);
+    const existing = this.aircraftManager.getAll();
+    const MIN_SPAWN_SEPARATION_NM = 15;
+
+    let position: ReturnType<typeof destinationPoint> | null = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const [minB, maxB] = pickRandom(nonStarSectors);
+      const span = maxB > minB ? maxB - minB : maxB + 360 - minB;
+      const bearing = normalizeHeading(minB + Math.random() * span);
+      const dist = 35 + Math.random() * 10; // 35-45nm
+      const candidate = destinationPoint(this.airportData.position, bearing, dist);
+      const tooClose = existing.some(ac => haversineDistance(ac.position, candidate) < MIN_SPAWN_SEPARATION_NM);
+      if (!tooClose) {
+        position = candidate;
+        break;
+      }
+    }
+    if (!position) return null; // No clear spawn slot this cycle
+
+    const { callsign, typeDesignator } = this.generateCallsign();
     const altitude = 8000 + Math.floor(Math.random() * 5) * 1000; // 8000-12000
     const heading = initialBearing(position, this.airportData.position);
     const arrivalRunway = this.pickArrivalRunway();
@@ -597,27 +610,40 @@ export class ScenarioGenerator {
   }
 
   /**
-   * Pick a STAR that doesn't have existing traffic too close to its entry fix.
-   * Ensures minimum 10nm spacing between same-STAR arrivals at entry.
+   * Pick a STAR that won't create an immediate conflict.
+   * Checks two things:
+   *  1. No aircraft (any STAR or vectored) within 15nm of this STAR's entry fix.
+   *  2. The inner approach corridor (within 30nm of airport) has fewer than 3 arrivals,
+   *     so all STARs merging at the same common fix don't stack up simultaneously.
    */
   private pickDeconflictedStar(): STAR | null {
     const stars = this.airportData.stars;
     if (stars.length === 0) return null;
 
     const existing = this.aircraftManager.getAll();
-    const MIN_SPACING_NM = 10;
+    const arrivals = existing.filter(ac => ac.category === 'arrival');
+    const MIN_ENTRY_SPACING_NM = 15;
+    const APPROACH_CORRIDOR_NM = 30;
+    const MAX_CORRIDOR_ARRIVALS = 2;
 
-    // Shuffle STARs to avoid bias
+    // Don't spawn if the approach corridor is already saturated.
+    // All KRIC STARs share a common path — adding more just creates merge conflicts.
+    const corridorCount = arrivals.filter(
+      ac => haversineDistance(ac.position, this.airportData.position) < APPROACH_CORRIDOR_NM
+    ).length;
+    if (corridorCount >= MAX_CORRIDOR_ARRIVALS) return null;
+
+    // Shuffle STARs to avoid always picking the same one
     const shuffled = [...stars].sort(() => Math.random() - 0.5);
 
     for (const star of shuffled) {
       const entryFix = this.getStarEntryPosition(star);
       let tooClose = false;
 
-      for (const ac of existing) {
-        if (ac.flightPlan.star !== star.name) continue;
+      // Check against ALL arrivals (not just same-STAR) near the entry fix
+      for (const ac of arrivals) {
         const dist = haversineDistance(ac.position, entryFix);
-        if (dist < MIN_SPACING_NM) {
+        if (dist < MIN_ENTRY_SPACING_NM) {
           tooClose = true;
           break;
         }
