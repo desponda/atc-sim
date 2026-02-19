@@ -136,8 +136,8 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [wxConditions, setWxConditions] = useState(wxInit.wx);
   const [arrRunways, setArrRunways] = useState<string[]>(wxInit.cfg.arr);
   const [depRunways, setDepRunways] = useState<string[]>(wxInit.cfg.dep);
-  // Default to VISUAL when wx allows, ILS otherwise
-  const [approachPreference, setApproachPreference] = useState<'VISUAL' | 'ILS'>(
+  // Default to VISUAL in VMC, ILS otherwise
+  const [approachPreference, setApproachPreference] = useState<'VISUAL' | 'ILS' | 'RNAV'>(
     wxInit.wx.visualOk ? 'VISUAL' : 'ILS'
   );
 
@@ -217,23 +217,33 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* Approach Type — visible only when VMC allows visual */}
-        {wxConditions.visualOk && (
-          <div style={fieldGroupStyle}>
-            <label style={labelStyle}>APPROACH TYPE</label>
-            <div style={buttonGroupStyle}>
-              {(['VISUAL', 'ILS'] as const).map((pref) => (
-                <button
-                  key={pref}
-                  style={optionButtonStyle(approachPreference === pref)}
-                  onClick={() => setApproachPreference(pref)}
-                >
-                  {pref}
-                </button>
-              ))}
+        {/* Approach Type — show all options valid for current weather */}
+        {(() => {
+          const wx = wxConditions.weather;
+          const ceiling = wx.ceiling ?? Infinity;
+          const vis = wx.visibility;
+          const opts: Array<'VISUAL' | 'ILS' | 'RNAV'> = [];
+          if (ceiling >= 1000 && vis >= 3) opts.push('VISUAL');
+          if (ceiling >= 200 && vis >= 0.5) opts.push('ILS');
+          if (ceiling >= 400 && vis >= 1.0) opts.push('RNAV');
+          if (opts.length <= 1) return null; // nothing to choose from
+          return (
+            <div style={fieldGroupStyle}>
+              <label style={labelStyle}>APPROACH TYPE</label>
+              <div style={buttonGroupStyle}>
+                {opts.map((pref) => (
+                  <button
+                    key={pref}
+                    style={optionButtonStyle(approachPreference === pref)}
+                    onClick={() => setApproachPreference(pref)}
+                  >
+                    {pref}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Runways — multi-select toggles */}
         {(() => {

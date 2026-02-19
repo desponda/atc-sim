@@ -774,7 +774,10 @@ export class ScenarioGenerator {
     if (pref === 'VISUAL') {
       return { type: 'VISUAL', runway: runwayId };
     }
-    // Prefer ILS; fall back to RNAV if no ILS on this runway
+    if (pref === 'RNAV') {
+      return { type: 'RNAV', runway: runwayId };
+    }
+    // ILS preferred; fall back to RNAV if no ILS on this runway
     if (rwy?.ilsAvailable) {
       return { type: 'ILS', runway: runwayId };
     }

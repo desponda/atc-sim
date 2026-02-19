@@ -56,11 +56,11 @@ export interface SessionConfig {
   weather: WeatherState;
   /**
    * Preferred approach type for arrivals.
-   * 'VISUAL' — use visual approaches when VMC allows (ceiling ≥ 1000, vis ≥ 3 SM).
-   * 'ILS'    — use ILS even in VMC conditions.
-   * Defaults to 'ILS' when not provided (safe for all weather).
+   * In VMC: VISUAL, ILS, and RNAV are all valid options.
+   * In IMC: VISUAL is not available; only ILS/RNAV apply.
+   * Defaults to 'ILS' when not provided.
    */
-  preferredApproach?: 'VISUAL' | 'ILS';
+  preferredApproach?: 'VISUAL' | 'ILS' | 'RNAV';
 }
 
 /** Simulation time state */
