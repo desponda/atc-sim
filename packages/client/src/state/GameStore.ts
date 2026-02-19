@@ -115,7 +115,7 @@ export interface GameStoreState {
 }
 
 const DEFAULT_SCOPE_SETTINGS: ScopeSettings = {
-  range: 60,
+  range: 25,
   showFixes: true,
   showSIDs: true,
   showSTARs: true,

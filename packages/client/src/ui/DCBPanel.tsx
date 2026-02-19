@@ -53,7 +53,7 @@ const buttonStyle = (active: boolean): React.CSSProperties => ({
   textAlign: 'center',
 });
 
-const RANGE_OPTIONS = [5, 10, 20, 30, 40, 60];
+const RANGE_OPTIONS = [5, 10, 20, 25, 30, 40, 60];
 const TRAIL_OPTIONS = [0, 1, 3, 5, 7, 10];
 
 /** Compact two-column row: cyan command + dim description */

@@ -11,7 +11,7 @@ export class Projection {
   /** Pan offset in nautical miles */
   private panOffsetNm = { x: 0, y: 0 };
   /** Range in nautical miles (radius of visible area) */
-  private rangeNm = 40;
+  private rangeNm = 25;
   /** Canvas width/height in pixels */
   private canvasWidth = 0;
   private canvasHeight = 0;
