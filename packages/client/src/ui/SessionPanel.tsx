@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, type Dispatch, type SetStateAction } from 'react';
 import { getGameClient } from '../network/GameClient';
 import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
 import type { SessionConfig, TrafficDensity, ScenarioType, WeatherState } from '@atc-sim/shared';
@@ -43,19 +43,52 @@ function availableRunways(wx: WeatherState): string[] {
   return KRIC_RUNWAYS.filter(r => approachCapability(r, wx) !== null);
 }
 
-/** Runway with best headwind from available list; prefers longer runway as tiebreaker */
-function bestRunwayForWind(windDir: number, available: string[]): string {
-  if (available.length === 0) return KRIC_RUNWAYS[0];
-  let best = available[0];
-  let bestScore = -Infinity;
-  for (const rwyId of available) {
-    const info = KRIC_RUNWAY_INFO[rwyId];
-    const angle = Math.abs(((windDir - info.heading + 180 + 360) % 360) - 180);
-    // Headwind preference (lower angle = better) + tiny length bonus as tiebreaker
-    const score = (180 - angle) + info.lengthFt / 100_000;
-    if (score > bestScore) { bestScore = score; best = rwyId; }
-  }
-  return best;
+/**
+ * Determine the default active runway set for the given weather.
+ *
+ * Logic mirrors real-world KRIC operations:
+ *   - Flow is determined by whether the wind has a northerly (→ RWY 34) or
+ *     southerly (→ RWY 16) component.  Calm/variable defaults to north flow.
+ *   - The long runway (16 or 34, 9 003 ft) is always the primary; it stays
+ *     preferred unless the crosswind component exceeds ~25 kt on it, which
+ *     almost never happens in the weather ranges we generate.
+ *   - Opposite-end runways (16 vs 34) are never active simultaneously.
+ *   - The crosswind runway (02 or 20) is added as a secondary departure option
+ *     when its headwind component is meaningfully better than the primary's
+ *     crosswind (i.e. winds are closer to east/west than north/south), AND the
+ *     runway is available under the current weather.
+ *   - Returns { arr, dep } arrays; caller may still override via the UI.
+ */
+function defaultRunwayConfig(wx: WeatherState): { arr: string[]; dep: string[] } {
+  const avail = availableRunways(wx);
+  if (avail.length === 0) return { arr: ['34'], dep: ['34'] }; // shouldn't happen after clamp
+
+  const windDir = wx.winds[0]?.direction ?? 0;
+  const windSpd = wx.winds[0]?.speed ?? 0;
+
+  // North flow: wind from 270–090 (inclusive), calm, or variable → use RWY 34
+  // South flow: wind from 090–270 → use RWY 16
+  const northFlow = windSpd === 0 || windDir >= 270 || windDir <= 90;
+  const primary = northFlow ? '34' : '16';
+  // Crosswind companion: 02 goes with 34 (north flow), 20 goes with 16 (south flow)
+  const crosswind = northFlow ? '02' : '20';
+
+  // Fall back to best available if primary is somehow not available (e.g. deep LIFR)
+  const usePrimary = avail.includes(primary) ? primary : avail[0];
+
+  // Add the crosswind runway as a secondary dep option only when:
+  //   1. it's available under current weather
+  //   2. its headwind angle is < 60° (it actually has a meaningful headwind component)
+  const crosswindInfo = KRIC_RUNWAY_INFO[crosswind];
+  const crosswindAngle = crosswindInfo
+    ? Math.abs(((windDir - crosswindInfo.heading + 180 + 360) % 360) - 180)
+    : 180;
+  const addCrosswind = avail.includes(crosswind) && crosswindAngle < 60;
+
+  return {
+    arr: [usePrimary],
+    dep: addCrosswind ? [usePrimary, crosswind] : [usePrimary],
+  };
 }
 
 const containerStyle: React.CSSProperties = {
@@ -174,25 +207,33 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [density, setDensity] = useState<TrafficDensity>('moderate');
   const [scenarioType, setScenarioType] = useState<ScenarioType>('mixed');
 
-  // Initialize wx and runways together so the runway reflects the initial wind + wx
+  // Initialize wx and runways together so the selection reflects the initial wind + wx
   const [wxInit] = useState(() => {
     const wx = generateRandomWeather();
-    const avail = availableRunways(wx.weather);
-    const best = bestRunwayForWind(wx.weather.winds[0]?.direction ?? 0, avail);
-    return { wx, best };
+    const cfg = defaultRunwayConfig(wx.weather);
+    return { wx, cfg };
   });
   const [wxConditions, setWxConditions] = useState(wxInit.wx);
-  const [arrRunway, setArrRunway] = useState(wxInit.best);
-  const [depRunway, setDepRunway] = useState(wxInit.best);
+  const [arrRunways, setArrRunways] = useState<string[]>(wxInit.cfg.arr);
+  const [depRunways, setDepRunways] = useState<string[]>(wxInit.cfg.dep);
 
   const rerollWeather = useCallback(() => {
     const newWx = generateRandomWeather();
     const avail = availableRunways(newWx.weather);
-    const best = bestRunwayForWind(newWx.weather.winds[0]?.direction ?? 0, avail);
+    const cfg = defaultRunwayConfig(newWx.weather);
     setWxConditions(newWx);
-    // If the current runway is no longer available under the new wx, switch to best
-    setArrRunway(prev => avail.includes(prev) ? prev : best);
-    setDepRunway(prev => avail.includes(prev) ? prev : best);
+    // Reapply default config; if a previously selected runway is now unavailable, drop it
+    setArrRunways(cfg.arr.filter(r => avail.includes(r)));
+    setDepRunways(cfg.dep.filter(r => avail.includes(r)));
+  }, []);
+
+  const toggleRunway = useCallback((set: Dispatch<SetStateAction<string[]>>, r: string) => {
+    set((prev: string[]) => {
+      if (prev.includes(r)) {
+        return prev.length > 1 ? prev.filter((x: string) => x !== r) : prev;
+      }
+      return [...prev, r];
+    });
   }, []);
 
   const handleStart = useCallback(() => {
@@ -201,15 +242,15 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
       density,
       scenarioType,
       runwayConfig: {
-        arrivalRunways: [arrRunway],
-        departureRunways: [depRunway],
+        arrivalRunways: arrRunways,
+        departureRunways: depRunways,
       },
       weather: wxConditions.weather,
     };
 
     getGameClient().createSession(config);
     onStart?.();
-  }, [airport, density, scenarioType, arrRunway, depRunway, wxConditions, onStart]);
+  }, [airport, density, scenarioType, arrRunways, depRunways, wxConditions, onStart]);
 
   return (
     <div style={containerStyle}>
@@ -249,32 +290,30 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* Runways */}
+        {/* Runways — multi-select toggles */}
         {(() => {
-          const windDir = wxConditions.weather.winds[0]?.direction ?? 0;
-          const windSpeed = wxConditions.weather.winds[0]?.speed ?? 0;
           const avail = availableRunways(wxConditions.weather);
-          const recommended = windSpeed > 0 ? bestRunwayForWind(windDir, avail) : avail[0] ?? null;
+          const flowCfg = defaultRunwayConfig(wxConditions.weather);
+          const flowLabel = flowCfg.arr[0] === '34' ? 'NORTH FLOW' : 'SOUTH FLOW';
 
-          const RunwayButtons = ({ selected, onSelect }: { selected: string; onSelect: (r: string) => void }) => (
+          const RunwayButtons = ({
+            selected, onToggle,
+          }: { selected: string[]; onToggle: (r: string) => void }) => (
             <div style={buttonGroupStyle}>
               {KRIC_RUNWAYS.map((r) => {
                 const info = KRIC_RUNWAY_INFO[r];
                 const cap = approachCapability(r, wxConditions.weather);
                 const isAvail = cap !== null;
-                const isActive = selected === r;
-                const isRec = r === recommended && !isActive;
+                const isActive = selected.includes(r);
                 const capColor = cap === 'ILS' ? STARSColors.normal : cap === 'RNAV' ? STARSColors.caution : STARSColors.dimText;
                 return (
                   <button
                     key={r}
                     style={optionButtonStyle(isActive, !isAvail)}
-                    onClick={() => isAvail && onSelect(r)}
-                    title={isAvail ? `RWY ${r} — ${info.lengthFt} ft — ${cap}` : `RWY ${r} — below minimums`}
+                    onClick={() => isAvail && onToggle(r)}
+                    title={isAvail ? `RWY ${r} — ${info.lengthFt.toLocaleString()} ft — ${cap} (click to toggle)` : `RWY ${r} — below minimums`}
                   >
-                    <div style={{ fontSize: 12, lineHeight: '1.2' }}>
-                      {r}{isRec ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
-                    </div>
+                    <div style={{ fontSize: 12, lineHeight: '1.2' }}>{r}</div>
                     <div style={{ fontSize: 8, marginTop: 1, color: isAvail ? capColor : '#333' }}>
                       {isAvail ? cap : 'N/A'}
                     </div>
@@ -289,13 +328,22 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
 
           return (
             <>
-              <div style={fieldGroupStyle}>
-                <label style={labelStyle}>ARRIVAL RUNWAY</label>
-                <RunwayButtons selected={arrRunway} onSelect={setArrRunway} />
+              <div style={{ ...fieldGroupStyle, marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                  <span style={labelStyle}>ARRIVAL RUNWAYS</span>
+                  <span style={{ fontSize: 9, color: STARSColors.dimText, letterSpacing: 1 }}>{flowLabel}</span>
+                </div>
+                <RunwayButtons
+                  selected={arrRunways}
+                  onToggle={r => toggleRunway(setArrRunways, r)}
+                />
               </div>
               <div style={fieldGroupStyle}>
-                <label style={labelStyle}>DEPARTURE RUNWAY</label>
-                <RunwayButtons selected={depRunway} onSelect={setDepRunway} />
+                <label style={labelStyle}>DEPARTURE RUNWAYS</label>
+                <RunwayButtons
+                  selected={depRunways}
+                  onToggle={r => toggleRunway(setDepRunways, r)}
+                />
               </div>
             </>
           );
