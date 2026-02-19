@@ -365,9 +365,15 @@ export class ScenarioGenerator {
       ac.targetAltitude = altitude;
       ac.clearances.altitude = altitude;
       ac.clearances.expectedApproach = this.resolveExpectedApproach(arrivalRunway);
-      // Center pre-offers handoff — controller accepts when ready as aircraft approaches
-      ac.inboundHandoff = 'offered';
-      ac.inboundHandoffOfferedAt = this.currentTick;
+      // Far-out aircraft (>45nm): center hasn't initiated the handoff yet — silent on scope.
+      // SimulationEngine will flip to 'offered' as they approach the 45nm boundary.
+      const distFromAirport = haversineDistance(position, this.airportData.position);
+      if (distFromAirport > 45) {
+        ac.inboundHandoff = 'pending';
+      } else {
+        ac.inboundHandoff = 'offered';
+        ac.inboundHandoffOfferedAt = this.currentTick;
+      }
       return ac;
     }
 

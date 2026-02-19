@@ -95,7 +95,10 @@ export class TargetLayer {
       const flashOn = Math.floor(Date.now() / 250) % 2 === 0;
 
       let color: string;
-      if (ac.inboundHandoff === 'offered') {
+      if (ac.inboundHandoff === 'pending') {
+        // Center's en-route traffic — silent, dim gray; no alert, no blink
+        color = STARSColors.coast;
+      } else if (ac.inboundHandoff === 'offered') {
         // Center is offering this arrival to us — amber flash, distinct from outbound
         color = Math.floor(Date.now() / 500) % 2 === 0 ? STARSColors.inboundHandoffOffered : STARSColors.inboundHandoffOfferedDim;
       } else if (ac.inboundHandoff === 'accepted') {
@@ -220,7 +223,10 @@ export class TargetLayer {
 
     // Inbound handoff markers take priority over outbound radar handoff markers
     let radarHandoffMarker: string;
-    if (ac.inboundHandoff === 'offered') {
+    if (ac.inboundHandoff === 'pending') {
+      // Still with center — no marker
+      radarHandoffMarker = '';
+    } else if (ac.inboundHandoff === 'offered') {
       // Caret suffix indicates inbound offer from center (flashes with the color)
       radarHandoffMarker = Math.floor(Date.now() / 500) % 2 === 0 ? '^' : '';
     } else if (ac.inboundHandoff === 'accepted') {

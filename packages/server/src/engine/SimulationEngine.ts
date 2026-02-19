@@ -511,6 +511,18 @@ export class SimulationEngine {
       }
     }
 
+    // 3b. Transition center's 'pending' arrivals to 'offered' as they enter TRACON
+    const HANDOFF_OFFER_NM = 45;
+    for (const ac of this.aircraftManager.getAll()) {
+      if (ac.inboundHandoff === 'pending' && ac.category === 'arrival') {
+        const dist = haversineDistance(ac.position, this.airportData.position);
+        if (dist <= HANDOFF_OFFER_NM) {
+          ac.inboundHandoff = 'offered';
+          ac.inboundHandoffOfferedAt = this.clock.tickCount;
+        }
+      }
+    }
+
     // 4. Run conflict detection
     const currentAircraft = this.aircraftManager.getAll();
     const newAlerts = this.conflictDetector.detect(currentAircraft, this.clock.time);

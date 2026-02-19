@@ -201,11 +201,12 @@ export interface AircraftState {
 
   /**
    * Inbound handoff state from Center to our sector.
-   * 'offered'  = center has pre-offered this arrival; controller must accept before aircraft checks in.
+   * 'pending'  = en route, center hasn't offered handoff yet; visible on scope but no alert.
+   * 'offered'  = center is initiating handoff; controller must accept before aircraft checks in.
    * 'accepted' = controller accepted; aircraft will check in after checkInDelayTicks reaches 0.
    * undefined  = aircraft is fully with us (normal).
    */
-  inboundHandoff?: 'offered' | 'accepted';
+  inboundHandoff?: 'pending' | 'offered' | 'accepted';
   /** Wall-clock time (ms) when the inbound handoff was offered (for penalty timing) */
   inboundHandoffOfferedAt?: number;
   /** Wall-clock time (ms) when the controller accepted the inbound handoff */
