@@ -4,6 +4,25 @@ import { STARSColors, STARSFonts } from '../radar/rendering/STARSTheme';
 import type { SessionConfig, TrafficDensity, ScenarioType } from '@atc-sim/shared';
 import { generateRandomWeather, wxCategoryColor } from './weatherGen';
 
+const KRIC_RUNWAYS = ['16', '34', '07', '25'];
+
+/** Approximate runway heading from designator (e.g. "16" → 160°, "34" → 340°) */
+function headingFromRunway(rwyId: string): number {
+  return parseInt(rwyId.replace(/[LCR]/g, ''), 10) * 10;
+}
+
+/** Return the runway with the smallest headwind angle for the given wind direction */
+function bestRunwayForWind(windDir: number, runways: string[] = KRIC_RUNWAYS): string {
+  let best = runways[0];
+  let bestAngle = 181;
+  for (const rwy of runways) {
+    const hdg = headingFromRunway(rwy);
+    const angle = Math.abs(((windDir - hdg + 180 + 360) % 360) - 180);
+    if (angle < bestAngle) { bestAngle = angle; best = rwy; }
+  }
+  return best;
+}
+
 const containerStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
@@ -118,11 +137,24 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
   const [airport] = useState('KRIC');
   const [density, setDensity] = useState<TrafficDensity>('moderate');
   const [scenarioType, setScenarioType] = useState<ScenarioType>('mixed');
-  const [arrRunway, setArrRunway] = useState('16');
-  const [depRunway, setDepRunway] = useState('16');
-  const [wxConditions, setWxConditions] = useState(() => generateRandomWeather());
 
-  const rerollWeather = useCallback(() => setWxConditions(generateRandomWeather()), []);
+  // Initialize wx and runways together so the runway reflects the initial wind
+  const [wxInit] = useState(() => {
+    const wx = generateRandomWeather();
+    const best = bestRunwayForWind(wx.weather.winds[0]?.direction ?? 0);
+    return { wx, best };
+  });
+  const [wxConditions, setWxConditions] = useState(wxInit.wx);
+  const [arrRunway, setArrRunway] = useState(wxInit.best);
+  const [depRunway, setDepRunway] = useState(wxInit.best);
+
+  const rerollWeather = useCallback(() => {
+    const newWx = generateRandomWeather();
+    const best = bestRunwayForWind(newWx.weather.winds[0]?.direction ?? 0);
+    setWxConditions(newWx);
+    setArrRunway(best);
+    setDepRunway(best);
+  }, []);
 
   const handleStart = useCallback(() => {
     const config: SessionConfig = {
@@ -179,27 +211,36 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
         </div>
 
         {/* Runways */}
-        <div style={fieldGroupStyle}>
-          <label style={labelStyle}>ARRIVAL RUNWAY</label>
-          <div style={buttonGroupStyle}>
-            {['16', '34', '07', '25'].map((r) => (
-              <button key={r} style={optionButtonStyle(arrRunway === r)} onClick={() => setArrRunway(r)}>
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
+        {(() => {
+          const windDir = wxConditions.weather.winds[0]?.direction ?? 0;
+          const windSpeed = wxConditions.weather.winds[0]?.speed ?? 0;
+          const recommended = windSpeed > 0 ? bestRunwayForWind(windDir) : null;
+          return (
+            <>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>ARRIVAL RUNWAY</label>
+                <div style={buttonGroupStyle}>
+                  {KRIC_RUNWAYS.map((r) => (
+                    <button key={r} style={optionButtonStyle(arrRunway === r)} onClick={() => setArrRunway(r)}>
+                      {r}{recommended === r && arrRunway !== r ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        <div style={fieldGroupStyle}>
-          <label style={labelStyle}>DEPARTURE RUNWAY</label>
-          <div style={buttonGroupStyle}>
-            {['16', '34', '07', '25'].map((r) => (
-              <button key={r} style={optionButtonStyle(depRunway === r)} onClick={() => setDepRunway(r)}>
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>DEPARTURE RUNWAY</label>
+                <div style={buttonGroupStyle}>
+                  {KRIC_RUNWAYS.map((r) => (
+                    <button key={r} style={optionButtonStyle(depRunway === r)} onClick={() => setDepRunway(r)}>
+                      {r}{recommended === r && depRunway !== r ? <span style={{ color: STARSColors.caution, fontSize: 8 }}> ▲</span> : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* Weather */}
         <div style={fieldGroupStyle}>
