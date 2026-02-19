@@ -436,7 +436,10 @@ export class ScenarioGenerator {
       if (tooClose) continue;
 
       const arrivalRunway = this.pickArrivalRunway();
-      const altitude = 4000 + Math.floor(Math.random() * 3) * 1000; // 4k-6k
+      // Stay above the highest SID altitude constraint so close-in arrivals
+      // never conflict with departures climbing through their initial clearance.
+      const minAlt = this.sidClearanceAltitude() + 2000;
+      const altitude = minAlt + Math.floor(Math.random() * 3) * 1000; // minAlt to minAlt+2k
       const speed = 250;
 
       // Route = STAR fixes still ahead of this aircraft's position.
@@ -1017,6 +1020,38 @@ export class ScenarioGenerator {
     route = dedupAppend(route, commonLegs);
     route = dedupAppend(route, rwyLegs);
     return route;
+  }
+
+  /**
+   * Return the highest altitude departures are initially cleared to on any SID.
+   * This is used to floor arrival altitudes above the departure climb band so
+   * close-in arrivals never conflict with SID traffic.
+   *
+   * Scans all SID runway-transition legs for `atOrAbove` and `at` altitude
+   * constraints and returns the maximum, rounded up to the nearest 1000 ft.
+   * Falls back to airport elevation + 5000 if no constraints exist.
+   */
+  private sidClearanceAltitude(): number {
+    const airportElev = this.airportData.elevation ?? 0;
+    const fallback = Math.round((airportElev + 5000) / 1000) * 1000;
+    let max = 0;
+
+    for (const sid of this.airportData.sids) {
+      // Check all runway-transition and common legs for climb constraints.
+      // Skip atOrBelow — those are descent / crossing restrictions, not climb targets.
+      const allLegs = [
+        ...sid.runwayTransitions.flatMap(t => t.legs),
+        ...sid.commonLegs,
+      ];
+      for (const leg of allLegs) {
+        const ac = leg.altitudeConstraint;
+        if (!ac || ac.type === 'atOrBelow') continue;
+        const alt = ac.type === 'between' ? ac.max : ac.altitude;
+        if (alt > max) max = alt;
+      }
+    }
+
+    return max > 0 ? Math.round(max / 1000) * 1000 : fallback;
   }
 
   /**
