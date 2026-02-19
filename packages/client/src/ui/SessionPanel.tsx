@@ -56,8 +56,8 @@ const fieldGroupStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  color: STARSColors.dimText,
-  fontSize: 8,
+  color: '#999999',
+  fontSize: 10,
   textTransform: 'uppercase',
   letterSpacing: 1,
   marginBottom: 6,
@@ -69,7 +69,7 @@ const selectStyle: React.CSSProperties = {
   background: STARSColors.panelBg,
   border: `1px solid ${STARSColors.panelBorder}`,
   color: STARSColors.normal,
-  textShadow: `0 0 3px ${STARSColors.glow}`,
+  textShadow: 'none',
   fontFamily: STARSFonts.family,
   fontSize: 13,
   cursor: 'pointer',
@@ -85,7 +85,7 @@ const optionButtonStyle = (active: boolean, disabled = false): React.CSSProperti
   padding: '5px 6px',
   background: active ? STARSColors.panelButtonActive : STARSColors.panelButton,
   border: `1px solid ${active ? '#00aa00' : STARSColors.panelBorder}`,
-  color: disabled ? '#333' : (active ? STARSColors.normal : STARSColors.dimText),
+  color: disabled ? '#444' : (active ? STARSColors.normal : '#999999'),
   textShadow: 'none',
   boxShadow: active ? 'inset 0 1px 3px rgba(0,0,0,0.6)' : 'none',
   fontFamily: STARSFonts.family,
@@ -176,7 +176,7 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
     <div style={containerStyle}>
       <div style={panelOuterStyle}>
         <div style={titleStyle}>STARS</div>
-        <div style={subtitleStyle}>STANDARD TERMINAL AUTOMATION REPLACEMENT SYSTEM</div>
+        <div style={subtitleStyle}>SESSION SETUP</div>
 
         {/* Airport */}
         <div style={fieldGroupStyle}>
@@ -229,7 +229,7 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
                 const cap = approachCapability(r, wxConditions.weather);
                 const isAvail = cap !== null;
                 const isActive = selected.includes(r);
-                const capColor = cap === 'ILS' ? STARSColors.normal : cap === 'RNAV' ? STARSColors.caution : STARSColors.dimText;
+                const capColor = cap === 'ILS' ? STARSColors.normal : cap === 'RNAV' ? STARSColors.caution : '#00cc44';
                 return (
                   <button
                     key={r}
@@ -238,10 +238,10 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
                     title={isAvail ? `RWY ${r} — ${info.lengthFt.toLocaleString()} ft — ${cap} (click to toggle)` : `RWY ${r} — below minimums`}
                   >
                     <div style={{ fontSize: 12, lineHeight: '1.2' }}>{r}</div>
-                    <div style={{ fontSize: 8, marginTop: 1, color: isAvail ? capColor : '#333' }}>
+                    <div style={{ fontSize: 9, marginTop: 1, color: isAvail ? capColor : '#444' }}>
                       {isAvail ? cap : 'N/A'}
                     </div>
-                    <div style={{ fontSize: 8, color: STARSColors.dimText }}>
+                    <div style={{ fontSize: 9, color: '#888888' }}>
                       {(info.lengthFt / 1000).toFixed(1)}k
                     </div>
                   </button>
@@ -255,7 +255,7 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
               <div style={{ ...fieldGroupStyle, marginBottom: 8 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                   <span style={labelStyle}>ARRIVAL RUNWAYS</span>
-                  <span style={{ fontSize: 9, color: STARSColors.dimText, letterSpacing: 1 }}>{flowLabel}</span>
+                  <span style={{ fontSize: 9, color: '#999999', letterSpacing: 1 }}>{flowLabel}</span>
                 </div>
                 <RunwayButtons
                   selected={arrRunways}
@@ -281,10 +281,10 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({ onStart }) => {
               onClick={rerollWeather}
               style={{
                 background: 'transparent',
-                border: `1px solid ${STARSColors.panelBorder}`,
-                color: STARSColors.dimText,
+                border: `1px solid #444444`,
+                color: '#999999',
                 fontFamily: STARSFonts.family,
-                fontSize: 9,
+                fontSize: 10,
                 padding: '2px 7px',
                 cursor: 'pointer',
                 letterSpacing: 1,
