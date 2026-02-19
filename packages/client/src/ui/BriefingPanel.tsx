@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useGameStore } from '../state/GameStore';
 import { getGameClient } from '../network/GameClient';
-import type { SessionConfig, AirportData, WeatherState } from '@atc-sim/shared';
+import type { SessionConfig, AirportData, WeatherState, SessionInfo } from '@atc-sim/shared';
 import { wxCategoryColor } from './weatherGen';
 import type { WxCategory } from './weatherGen';
 
@@ -120,7 +120,7 @@ function atisInfoLetter(config: SessionConfig): string {
 }
 
 function openFullBriefing(
-  session: ReturnType<typeof useGameStore>['session'],
+  session: SessionInfo | null,
   airportData: AirportData,
   weather: WeatherState,
   towerFreq: string,
@@ -172,8 +172,8 @@ function openFullBriefing(
 
 <h2>Active Runway Configuration</h2>
 <div class="row">
-  ${arrRwys.length > 0 ? `<span class="kv"><span class="kv-label">ARRIVAL</span><span style="color:#00cccc">${arrRwys.map(r => `RWY ${r} — ${runwayApproachType(r, airportData)}`).join(', ')}</span></span>` : ''}
-  ${depRwys.length > 0 ? `<span class="kv"><span class="kv-label">DEPARTURE</span><span class="green">${depRwys.map(r => `RWY ${r}`).join(', ')}</span></span>` : ''}
+  ${arrRwys.length > 0 ? `<span class="kv"><span class="kv-label">ARRIVAL</span><span style="color:#00cccc">${arrRwys.map((r: string) => `RWY ${r} — ${runwayApproachType(r, airportData)}`).join(', ')}</span></span>` : ''}
+  ${depRwys.length > 0 ? `<span class="kv"><span class="kv-label">DEPARTURE</span><span class="green">${depRwys.map((r: string) => `RWY ${r}`).join(', ')}</span></span>` : ''}
 </div>
 
 <h2>Frequencies</h2>
@@ -195,7 +195,7 @@ ${airportData.sids.map(s => `<div class="bullet"><strong style="color:#e8e8e8">$
 ` : ''}
 
 <h2>Arrivals — Responsibilities</h2>
-<div class="dim" style="margin-bottom:8px">Receive arrivals from Washington Center, sequence for ${arrRwys.map(r => 'Runway ' + r).join(' / ')}.</div>
+<div class="dim" style="margin-bottom:8px">Receive arrivals from Washington Center, sequence for ${arrRwys.map((r: string) => 'Runway ' + r).join(' / ')}.</div>
 <div class="bullet">Arrivals appear <span class="amber">amber blinking with ^ suffix</span> — click to accept inbound handoff from Center.</div>
 <div class="bullet">After check-in, step them down as needed: <span class="cyan">AAL101 dm 8000</span></div>
 <div class="bullet">Vector to final: <span class="cyan">AAL101 tl200</span> then <span class="cyan">AAL101 tl160 dm3000 ci16</span></div>
