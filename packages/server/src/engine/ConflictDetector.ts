@@ -218,17 +218,16 @@ export class ConflictDetector {
         }
       }
 
-      // Airspace exit warning: IFR aircraft approaching boundary without a handoff assigned.
-      // Exclude arrivals that still have center's inbound handoff pending — they are not
-      // our traffic yet and are inbound, not leaving.
+      // Airspace exit warning: departures and overflights approaching boundary without a handoff.
+      // Arrivals are always inbound — they can never be "leaving" — so exclude them entirely.
       const airspaceKey = `AIRSPACE:${ac.id}`;
       const needsHandoff = !ac.onGround
         && ac.flightPhase !== 'landed'
         && ac.flightPhase !== 'ground'
         && ac.category !== 'vfr'
+        && ac.category !== 'arrival'
         && !ac.handingOff
         && ac.clearances.handoffFrequency === null
-        && !(ac.category === 'arrival' && ac.inboundHandoff)
         && this.airportData;
 
       if (needsHandoff) {
